@@ -960,7 +960,7 @@ static const char *svlist[] =
     "in_menuscreen",
     "in_new_game",
     "in_options",
-	//"in_sa_count", TAG_YO variable antigua, usada para saber el número de veces que se terminó el juego
+    "in_sa_count",
     "in_selectscreen",
     "in_showcomplete",
     "in_sound_options",
@@ -8380,11 +8380,14 @@ int getsyspropertybyindex(ScriptVariant *var, int index)
         ScriptVariant_ChangeType(var, VT_INTEGER);
         var->lVal = gfx_y_offset_adj;
         break;
+    case _sv_in_sa_count:
+        ScriptVariant_ChangeType(var, VT_INTEGER);
+        var->lVal = finisheds_games_count;
+        break;
     case _sv_in_selectscreen:
         ScriptVariant_ChangeType(var, VT_INTEGER);
         var->lVal = selectScreen;
-        //var->lVal = finisheds_games_count; TAG_YO
-	break;
+        break;
     case _sv_lasthita:
     case _sv_lasthity:
         ScriptVariant_ChangeType(var, VT_DECIMAL);
