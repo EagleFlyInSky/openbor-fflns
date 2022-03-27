@@ -347,19 +347,19 @@ void getPakName(char *name, int type)
     switch(type)
     {
     case 0:
-        strcat(mod, ".sav");
+        strcpy(mod, "Final Fight LNS.sav");
         break;
     case 1:
-        strcat(mod, ".hi");
+        strcpy(mod, "Final Fight LNS.hi");
         break;
     case 2:
-        strcat(mod, ".scr");
+        strcpy(mod, "Final Fight LNS.scr");
         break;
     case 3:
-        strcat(mod, ".inp");
+        strcpy(mod, "Final Fight LNS.inp");
         break;
     case 4:
-        strcat(mod, ".cfg");
+        strcpy(mod, "Final Fight LNS.cfg");
         break;
     default:
         // Loose extension!

@@ -38843,25 +38843,7 @@ void openborMain(int argc, char **argv)
     printf("OpenBoR %s Compile Date: " __DATE__ "\n\n", VERSION);
     
     // Add pak name as allowselect args
-    int init_index = 0;
-    int end_index = strlen(packfile) - 1;
-    for(int i = 0; i < strlen(packfile); ++i)
-    {
-      if(packfile[i] == '/')
-      {
-        init_index = i + 1;
-      }
-      if(packfile[i] == '.')
-      {
-        end_index = i;
-      }
-    }
-    int filename_length = end_index - init_index;
-    for(int i = 0; i < filename_length; ++i)
-    {
-      allowselect_cmdline_args[i] = packfile[init_index + i];
-    }
-    allowselect_cmdline_args[filename_length] = '\0';
+    getPakName(allowselect_cmdline_args, -1);
     strcat(allowselect_cmdline_args, " ");
     
     if(argc > 1)
