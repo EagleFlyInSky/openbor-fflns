@@ -4702,42 +4702,6 @@ s_model *nextplayermodel(s_model *current)
     return NULL;
 }
 
-s_model *nextplayermodelcol(s_model *current)
-{
-	 int i;
-    int curindex = -1;
-    int loops;
-    if(current)
-    {
-        // Find index of current player model
-        for(i = 0; i < models_cached; i++)
-        {
-            if(model_cache[i].model == current)
-            {
-                curindex = i;
-                break;
-            }
-        }
-    }
-    // Find next player model (first one after current index)
-    for(i = curindex + 1, loops = 0; loops < models_cached; i++, loops++)
-    {
-        if(i >= models_cached)
-        {
-            i = 0;
-        }
-        if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
-                (allow_secret_chars || !model_cache[i].model->secret) &&
-                model_cache[i].model->clearcount <= bonus && model_cache[i].selectable && model_cache[i].model->selectcol == current->selectcol )
-        {
-            //printf("next %s\n", model_cache[i].model->name);
-            return model_cache[i].model;
-        }
-    }
-    borShutdown(1, "Fatal: can't find any player models!");
-    return NULL;
-}
-
 s_model *nextplayermodeln(s_model *current, int p)
 {
     int i;
@@ -4784,6 +4748,88 @@ s_model *nextplayermodeln(s_model *current, int p)
     return model;
 }
 
+s_model *nextplayermodelcol(s_model *current)
+{
+	 int i;
+    int curindex = -1;
+    int loops;
+    if(current)
+    {
+        // Find index of current player model
+        for(i = 0; i < models_cached; i++)
+        {
+            if(model_cache[i].model == current)
+            {
+                curindex = i;
+                break;
+            }
+        }
+    }
+    // Find next player model (first one after current index)
+    for(i = curindex + 1, loops = 0; loops < models_cached; i++, loops++)
+    {
+        if(i >= models_cached)
+        {
+            i = 0;
+        }
+        if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
+                (allow_secret_chars || !model_cache[i].model->secret) &&
+                model_cache[i].model->clearcount <= bonus && model_cache[i].selectable && model_cache[i].model->selectcol == current->selectcol )
+        {
+            //printf("next %s\n", model_cache[i].model->name);
+            return model_cache[i].model;
+        }
+    }
+    borShutdown(1, "Fatal: can't find any player models!");
+    return NULL;
+}
+
+s_model *nextplayermodelcoln(s_model *current, int p)
+{
+    int i;
+    s_set_entry *set = levelsets + current_set;
+    s_model *model = nextplayermodelcol(current);
+
+    if(set->nosame & 1)
+    {
+        int used_player_count = 0, player_count = 0;
+
+        // check count of selectable players
+        for(i = 0; i < models_cached; i++)
+        {
+            if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
+                    (allow_secret_chars || !model_cache[i].model->secret) &&
+                    model_cache[i].model->clearcount <= bonus && model_cache[i].selectable)
+            {
+                ++player_count;
+            }
+        }
+
+        // count all used player
+        for(i = 0; model && i < MAX_PLAYERS; i++)
+        {
+            if(i != p && stricmp(player[p].name, player[i].name) == 0)
+            {
+                ++used_player_count;
+                // all busy players? return the next natural
+                if (used_player_count >= player_count) return model;
+            }
+        }
+
+        // search the first free player
+        for(i = 0; model && i < MAX_PLAYERS; i++)
+        {
+            if(i != p && stricmp(model->name, player[i].name) == 0)
+            {
+                i = -1;
+                model = nextplayermodelcol(model);
+            }
+        }
+    }
+
+    return model;
+}
+
 // Use by player select menus
 s_model *prevplayermodel(s_model *current)
 {
@@ -4812,42 +4858,6 @@ s_model *prevplayermodel(s_model *current)
         if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
                 (allow_secret_chars || !model_cache[i].model->secret) &&
                 model_cache[i].model->clearcount <= bonus && model_cache[i].selectable)
-        {
-            //printf("prev %s\n", model_cache[i].model->name);
-            return model_cache[i].model;
-        }
-    }
-    borShutdown(1, "Fatal: can't find any player models!");
-    return NULL;
-}
-
-s_model *prevplayermodelcol(s_model *current)
-{
-	 int i;
-    int curindex = -1;
-    int loops;
-    if(current)
-    {
-        // Find index of current player model
-        for(i = 0; i < models_cached; i++)
-        {
-            if(model_cache[i].model == current)
-            {
-                curindex = i;
-                break;
-            }
-        }
-    }
-    // Find next player model (first one after current index)
-    for(i = curindex - 1, loops = 0; loops < models_cached; i--, loops++)
-    {
-        if(i < 0)
-        {
-            i = models_cached - 1;
-        }
-        if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
-                (allow_secret_chars || !model_cache[i].model->secret) &&
-                model_cache[i].model->clearcount <= bonus && model_cache[i].selectable && model_cache[i].model->selectcol == current->selectcol)
         {
             //printf("prev %s\n", model_cache[i].model->name);
             return model_cache[i].model;
@@ -4896,6 +4906,88 @@ s_model *prevplayermodeln(s_model *current, int p)
             {
                 i = -1;
                 model = prevplayermodel(model);
+            }
+        }
+    }
+
+    return model;
+}
+
+s_model *prevplayermodelcol(s_model *current)
+{
+	 int i;
+    int curindex = -1;
+    int loops;
+    if(current)
+    {
+        // Find index of current player model
+        for(i = 0; i < models_cached; i++)
+        {
+            if(model_cache[i].model == current)
+            {
+                curindex = i;
+                break;
+            }
+        }
+    }
+    // Find next player model (first one after current index)
+    for(i = curindex - 1, loops = 0; loops < models_cached; i--, loops++)
+    {
+        if(i < 0)
+        {
+            i = models_cached - 1;
+        }
+        if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
+                (allow_secret_chars || !model_cache[i].model->secret) &&
+                model_cache[i].model->clearcount <= bonus && model_cache[i].selectable && model_cache[i].model->selectcol == current->selectcol)
+        {
+            //printf("prev %s\n", model_cache[i].model->name);
+            return model_cache[i].model;
+        }
+    }
+    borShutdown(1, "Fatal: can't find any player models!");
+    return NULL;
+}
+
+s_model *prevplayermodelcoln(s_model *current, int p)
+{
+    int i;
+    s_set_entry *set = levelsets + current_set;
+    s_model *model = prevplayermodelcol(current);
+
+    if(set->nosame & 1)
+    {
+        int used_player_count = 0, player_count = 0;
+
+        // check count of selectable players
+        for(i = 0; i < models_cached; i++)
+        {
+            if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
+                    (allow_secret_chars || !model_cache[i].model->secret) &&
+                    model_cache[i].model->clearcount <= bonus && model_cache[i].selectable)
+            {
+                ++player_count;
+            }
+        }
+
+        // count all used player
+        for(i = 0; model && i < MAX_PLAYERS; i++)
+        {
+            if(i != p && stricmp(player[p].name, player[i].name) == 0)
+            {
+                ++used_player_count;
+                // all busy players? return the prev natural
+                if (used_player_count >= player_count) return model;
+            }
+        }
+
+        // search the first free player
+        for(i = 0; model && i < MAX_PLAYERS; i++)
+        {
+            if(i != p && stricmp(model->name, player[i].name) == 0)
+            {
+                i = -1;
+                model = prevplayermodelcol(model);
             }
         }
     }
@@ -36032,7 +36124,7 @@ int selectplayer(int *players, char *filename, int useSavedGame)
                     {
                         sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
                     }
-                    ent_set_model(example[i], ((player[i].newkeys & FLAG_MOVEUP) ? prevplayermodelcol : nextplayermodelcol)(example[i]->model)->name, 0);
+                    ent_set_model(example[i], ((player[i].newkeys & FLAG_MOVEUP) ? prevplayermodelcoln : nextplayermodelcoln)(example[i]->model,i)->name, 0);
 
                     strcpy(player[i].name, example[i]->model->name);
                     player[i].colourmap = (colourselect && (set->nosame & 2)) ? nextcolourmapn(example[i]->model, -1, i) : 0;
