@@ -5984,6 +5984,7 @@ void cache_model(char *name, char *path, int flag)
     model_cache[models_cached].path[len] = 0;
 
     model_cache[models_cached].loadflag = flag;
+    model_cache[models_cached].player = 0;
 
     _peek_model_name(models_cached);
     ++models_cached;
@@ -12392,48 +12393,7 @@ int load_models()
     // Defer load_cached_model, so you can define models after their nested model.
     printf("\n");
     
-    char argbuf_allowselect[MAX_ALLOWSELECT_LEN] = "";
-    ParseArgs(&arglist, allowselect_cmdline_args, argbuf_allowselect);
-    allowselect_cmdline_args[0] = '\0';
-    char *cmdline_arg;
-    
-    for(i = 0; (cmdline_arg = GET_ARG(i))[0]; i++)
-    {
-      char delim[] = "=";
-      char *name = strtok(cmdline_arg, delim);
-      char *load = strtok(NULL, delim);
-      
-      if(load)
-      {
-        int index = get_cached_model_index(name);
-        if(index >= 0)
-        {
-          int loadflag = atoi(load);
-          if(loadflag)
-          {
-            if(strlen(allowselect_cmdline_args) == 0)
-            {
-              strcat(allowselect_cmdline_args, "allowselect");
-            }
-            strcat(allowselect_cmdline_args, " ");
-            strcat(allowselect_cmdline_args, name);
-            
-            if(loadflag != model_cache[index].loadflag)
-            {
-              ++modelLoadCount;
-            }
-          }
-          else
-          {
-            if(loadflag != model_cache[index].loadflag)
-            {
-              --modelLoadCount;
-            }
-          }
-          model_cache[index].loadflag = loadflag;
-        }
-      }
-    }
+    update_players_loadflag(&modelLoadCount);
     
     for(i = 0, pos = 0; i < models_cached; i++)
     {
@@ -12459,8 +12419,73 @@ int load_models()
     return 1;
 }
 
-
-
+void update_players_loadflag(int *modelLoadCount)
+{
+  char *buf, *value;
+  size_t size = 0;
+  ptrdiff_t pos = 0;
+  ArgList arglist;
+  char argbuf[MAX_ALLOWSELECT_LEN + 1] = "";
+  
+  for(int levelset_index = 0; levelset_index < num_difficulties; ++levelset_index)
+  {
+    s_set_entry* levelset = levelsets + levelset_index;
+    for(int level_index = 0; level_index < levelset->numlevels; ++level_index)
+    {
+      s_level_entry* level = levelset->levelorder + level_index;
+      if(level->type == LE_TYPE_SELECT_SCREEN)
+      {
+        buffer_pakfile(level->filename, &buf, &size);
+        while(pos < size)
+        {
+          ParseArgs(&arglist, buf + pos, argbuf);
+          value = GET_ARG(0);
+          if(value && value[0])
+          {
+            if(stricmp(value, "allowselect") == 0)
+            {
+              for(int arg_index = 1; (value = GET_ARG(arg_index))[0]; ++arg_index)
+              {
+                int model_index = get_cached_model_index(value);
+                if(model_index >= 0)
+                {
+                 model_cache[model_index].player = 1;
+                }
+              }
+            }
+          }
+          pos += getNewLineStart(buf + pos);
+        }
+      }
+    }
+  }
+    
+  ParseArgs(&arglist, allowselect_cmdline_args, argbuf);
+  allowselect_cmdline_args[0] = '\0';
+  for(int arg_index = 0; (value = GET_ARG(arg_index))[0]; arg_index++)
+  {
+    int found_model_index = get_cached_model_index(value);
+    if(found_model_index >= 0)
+    {
+      model_cache[found_model_index].loadflag = 1;
+      if(strlen(allowselect_cmdline_args) == 0)
+      {
+        printf("Player Char: %s\n", value);
+        strcat(allowselect_cmdline_args, "allowselect");
+        for(int model_index = 0; model_index < models_cached; ++model_index)
+        {
+          if(model_cache[model_index].player && stricmp(model_cache[model_index].name, value) != 0)
+          {
+            model_cache[model_index].loadflag = 0;
+            printf("Player Char: %s\n", model_cache[model_index].name);
+          }
+        }
+      }
+      strcat(allowselect_cmdline_args, " ");
+      strcat(allowselect_cmdline_args, value);
+    }
+  }
+}
 
 void unload_levelorder()
 {
@@ -38724,7 +38749,29 @@ void openborMain(int argc, char **argv)
     int argl;
 
     printf("OpenBoR %s Compile Date: " __DATE__ "\n\n", VERSION);
-
+    
+    // Add pak name as allowselect args
+    int init_index = 0;
+    int end_index = strlen(packfile) - 1;
+    for(int i = 0; i < strlen(packfile); ++i)
+    {
+      if(packfile[i] == '/')
+      {
+        init_index = i + 1;
+      }
+      if(packfile[i] == '.')
+      {
+        end_index = i;
+      }
+    }
+    int filename_length = end_index - init_index;
+    for(int i = 0; i < filename_length; ++i)
+    {
+      allowselect_cmdline_args[i] = packfile[init_index + i];
+    }
+    allowselect_cmdline_args[filename_length] = '\0';
+    strcat(allowselect_cmdline_args, " ");
+    
     if(argc > 1)
     {
         argl = strlen(argv[1]);

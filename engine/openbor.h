@@ -2229,6 +2229,7 @@ typedef struct
     s_model *model;
     int loadflag;
     int selectable;
+    int player;
 } s_modelcache;
 s_modelcache *model_cache;
 
@@ -2842,6 +2843,7 @@ s_model *load_cached_model(char *name, char *owner, char unload);
 int is_set(s_model *model, int m);
 int load_script_setting();
 int load_models();
+void update_players_loadflag(int *modelLoadCount);
 void unload_levelorder();
 void load_levelorder();
 void unload_level();
