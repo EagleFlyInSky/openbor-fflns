@@ -15380,7 +15380,14 @@ HRESULT openbor_getsaveinfo(ScriptVariant **varlist , ScriptVariant **pretvar, i
     }
     else if(0 == stricmp(prop, "times_completed"))
     {
-        (*pretvar)->lVal = (LONG)slot->times_completed;
+        if(unlock_all)
+        {
+          (*pretvar)->lVal = 999;
+        }
+        else
+        {
+          (*pretvar)->lVal = (LONG)slot->times_completed;
+        }
     }
     else if(0 == stricmp(prop, "score"))
     {

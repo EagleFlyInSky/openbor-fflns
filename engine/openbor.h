@@ -3141,5 +3141,6 @@ void goto_mainmenu(int);
 
 extern s_savelevel   *savelevel;
 extern s_savescore    savescore;
+extern int unlock_all;
 
 #endif
