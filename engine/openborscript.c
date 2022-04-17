@@ -47,7 +47,6 @@ int            max_entity_vars = 0;
 int            max_script_vars = 0;
 int			   no_nested_script = 0;
 
-extern int  finisheds_games_count;
 extern int  ent_count;
 extern int  ent_max;
 extern int  gameOver;
@@ -341,6 +340,7 @@ int Varlist_DeleteByName(Varlist *array, char *theName)
 void Script_Global_Init()
 {
     memset(&spawnentry, 0, sizeof(spawnentry)); //clear up the spawn entry
+    spawnentry.index = spawnentry.item_properties.index = spawnentry.weaponindex = -1;
     drawmethod = plainmethod;
 
     Varlist_Init(&global_var_list, max_indexed_vars);
@@ -396,6 +396,7 @@ void Script_Global_Clear()
     Varlist_Clear(&global_var_list);
 
     memset(&spawnentry, 0, sizeof(spawnentry));//clear up the spawn entry
+    spawnentry.index = spawnentry.item_properties.index = spawnentry.weaponindex = -1;
     for(i = 0; i < numfilestreams; i++)
     {
         if(filestreams[i].buf)
@@ -8382,7 +8383,7 @@ int getsyspropertybyindex(ScriptVariant *var, int index)
         break;
     case _sv_in_sa_count:
         ScriptVariant_ChangeType(var, VT_INTEGER);
-        var->lVal = finisheds_games_count;
+        var->lVal = bonus;
         break;
     case _sv_in_selectscreen:
         ScriptVariant_ChangeType(var, VT_INTEGER);
@@ -8433,7 +8434,6 @@ int getsyspropertybyindex(ScriptVariant *var, int index)
     case _sv_hresolution:
         ScriptVariant_ChangeType(var, VT_INTEGER);
         var->lVal = videomodes.hRes;
-        //var->lVal = finisheds_games_count;
 	break;
     case _sv_vresolution:
         ScriptVariant_ChangeType(var, VT_INTEGER);
@@ -10516,6 +10516,7 @@ HRESULT openbor_setspawnentry(ScriptVariant **varlist, ScriptVariant **pretvar, 
     DOUBLE dbltemp;
     int temp, prop;
     ScriptVariant *arg = NULL;
+    char *name;
 
     if(paramCount < 2)
     {
@@ -10549,15 +10550,11 @@ HRESULT openbor_setspawnentry(ScriptVariant **varlist, ScriptVariant **pretvar, 
             printf("You must use a string value for spawn entry's name property: function setspawnentry.\n");
             goto setspawnentry_error;
         }
-        char *name = (char *)StrCache_Get(arg->strVal);
+        name = (char *)StrCache_Get(arg->strVal);
         spawnentry.model = findmodel(name);
         if(!spawnentry.model)
         {
-          int index = get_cached_model_index(name);
-          if(index >= 0)
-          {
-            spawnentry.name = model_cache[index].name;
-          }
+          spawnentry.index = get_cached_model_index(name);
         }
         break;
     case _sse_alias:
@@ -14208,7 +14205,7 @@ HRESULT openbor_loadmodel(ScriptVariant **varlist , ScriptVariant **pretvar, int
             goto loadmodel_error;
         }
 
-    model = load_cached_model(StrCache_Get(varlist[0]->strVal), "openbor_loadmodel", (char)unload);
+    model = load_cached_model(StrCache_Get(varlist[0]->strVal), "openbor_loadmodel", (char)unload, false);
 
     if(paramCount >= 3 && model)
     {
@@ -15380,9 +15377,9 @@ HRESULT openbor_getsaveinfo(ScriptVariant **varlist , ScriptVariant **pretvar, i
     }
     else if(0 == stricmp(prop, "times_completed"))
     {
-        if(unlock_all)
+        if(cheatcode != 0)
         {
-          (*pretvar)->lVal = 999;
+          (*pretvar)->lVal = (ltemp == 0) ? bonus : 0;
         }
         else
         {

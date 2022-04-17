@@ -2218,8 +2218,8 @@ typedef struct
     int hitwalltype; // wall type to toggle hitwall animations
     e_ModelFreetype freetypes;
     s_scripts *scripts;
-	
-	int selectcol; //almacena la columna que usará el personaje en la pantalla de selección.
+    int selectcol; //almacena la columna que usará el personaje en la pantalla de selección.
+    bool quickload;
 } s_model;
 
 typedef struct
@@ -2229,7 +2229,11 @@ typedef struct
     s_model *model;
     int loadflag;
     int selectable;
-    int player;
+
+    //quickload
+    bool player;
+    int clearcount;
+    int selectcol;
 } s_modelcache;
 s_modelcache *model_cache;
 
@@ -2839,11 +2843,13 @@ void remove_from_cache(char *name);
 void free_modelcache();
 int get_cached_model_index(char *name);
 char *get_cached_model_path(char *name);
-s_model *load_cached_model(char *name, char *owner, char unload);
+s_model *load_cached_model(char *name, char *owner, char unload, bool quickload);
 int is_set(s_model *model, int m);
 int load_script_setting();
 int load_models();
-void update_players_loadflag(int *modelLoadCount);
+void identify_selectable_players();
+void preload_cached_model(char *name);
+void unload_model(s_model *model);
 void unload_levelorder();
 void load_levelorder();
 void unload_level();
@@ -3141,6 +3147,7 @@ void goto_mainmenu(int);
 
 extern s_savelevel   *savelevel;
 extern s_savescore    savescore;
-extern int unlock_all;
+extern int cheatcode;
+extern int bonus;
 
 #endif

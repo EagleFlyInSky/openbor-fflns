@@ -34,8 +34,6 @@ s_savedata savedata;
 //  Global Variables                                                        //
 /////////////////////////////////////////////////////////////////////////////
 
-int finisheds_games_count = 0;
-
 a_playrecstatus *playrecstatus = NULL;
 
 s_set_entry *levelsets = NULL;
@@ -216,7 +214,6 @@ char                rush_names[2][MAX_NAME_LEN];
 char				skipselect[MAX_PLAYERS][MAX_NAME_LEN];
 char                branch_name[MAX_NAME_LEN + 1];  // Used for branches
 char                allowselect_args[MAX_ALLOWSELECT_LEN]; // stored allowselect players
-char                allowselect_cmdline_args[MAX_ALLOWSELECT_LEN] = {""};
 int					useSave = 0;
 int					useSet = -1;
 unsigned char       pal[MAX_PAL_SIZE] = {""};
@@ -688,7 +685,7 @@ int                 timeleft			= 0;
 int                 oldtime             = 0;                    // One second back from time left.
 int                 holez				= 0;					// Used for setting spawn points
 int                 allow_secret_chars	= 0;
-int                 unlock_all          = 0;
+int                 cheatcode			= 0;
 unsigned int        lifescore			= 50000;				// Number of points needed to earn a 1-up
 unsigned int        credscore			= 0;					// Number of points needed to earn a credit
 int                 mpblock				= 0;					// Take chip damage from health or MP first?
@@ -2622,15 +2619,13 @@ int loadGameFile()
         clearSavedGame();
         result = 0;
     }
-    else if(!unlock_all)
+    else if(cheatcode == 0)
     {
         bonus = 0;
         for(i = 0; i < num_difficulties; i++) if(savelevel[i].times_completed > 0)
-            {
-                bonus += savelevel[i].times_completed;
-            }
-            //printf("Bonus: %d \n",bonus);
-            finisheds_games_count = bonus; //TAG_YO Cargamos el número de veces que se ha pasado el juego en la variable global finisheds_games_count
+        {
+            bonus += savelevel[i].times_completed;
+        }
     }
 
     fclose(handle);
@@ -4690,12 +4685,18 @@ s_model *nextplayermodel(s_model *current)
         {
             i = 0;
         }
-        if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
-                (allow_secret_chars || !model_cache[i].model->secret) &&
-                model_cache[i].model->clearcount <= bonus && model_cache[i].selectable)
+        if(model_cache[i].selectable && 
+          model_cache[i].clearcount <= bonus)
         {
-            //printf("next %s\n", model_cache[i].model->name);
+          // quickload
+          if(!model_cache[i].model)
+          {
+            load_cached_model(model_cache[i].name, "models.txt", 3, true);
+          }
+          if(model_cache[i].model)
+          {
             return model_cache[i].model;
+          }
         }
     }
     borShutdown(1, "Fatal: can't find any player models!");
@@ -4715,9 +4716,8 @@ s_model *nextplayermodeln(s_model *current, int p)
         // check count of selectable players
         for(i = 0; i < models_cached; i++)
         {
-            if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
-                    (allow_secret_chars || !model_cache[i].model->secret) &&
-                    model_cache[i].model->clearcount <= bonus && model_cache[i].selectable)
+            if(model_cache[i].selectable && 
+              model_cache[i].clearcount <= bonus)
             {
                 ++player_count;
             }
@@ -4772,12 +4772,19 @@ s_model *nextplayermodelcol(s_model *current)
         {
             i = 0;
         }
-        if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
-                (allow_secret_chars || !model_cache[i].model->secret) &&
-                model_cache[i].model->clearcount <= bonus && model_cache[i].selectable && model_cache[i].model->selectcol == current->selectcol )
+        if(model_cache[i].selectable && 
+          model_cache[i].clearcount <= bonus && 
+          model_cache[i].selectcol == current->selectcol)
         {
-            //printf("next %s\n", model_cache[i].model->name);
+          // quickload
+          if (!model_cache[i].model)
+          {
+            load_cached_model(model_cache[i].name, "models.txt", 3, true);
+          }
+          if (model_cache[i].model)
+          {
             return model_cache[i].model;
+          }
         }
     }
     borShutdown(1, "Fatal: can't find any player models!");
@@ -4797,9 +4804,8 @@ s_model *nextplayermodelcoln(s_model *current, int p)
         // check count of selectable players
         for(i = 0; i < models_cached; i++)
         {
-            if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
-                    (allow_secret_chars || !model_cache[i].model->secret) &&
-                    model_cache[i].model->clearcount <= bonus && model_cache[i].selectable)
+            if(model_cache[i].selectable &&
+              model_cache[i].clearcount <= bonus)
             {
                 ++player_count;
             }
@@ -4855,12 +4861,18 @@ s_model *prevplayermodel(s_model *current)
         {
             i = models_cached - 1;
         }
-        if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
-                (allow_secret_chars || !model_cache[i].model->secret) &&
-                model_cache[i].model->clearcount <= bonus && model_cache[i].selectable)
+        if(model_cache[i].selectable &&
+          model_cache[i].clearcount <= bonus)
         {
-            //printf("prev %s\n", model_cache[i].model->name);
+          // quickload
+          if (!model_cache[i].model)
+          {
+            load_cached_model(model_cache[i].name, "models.txt", 3, true);
+          }
+          if (model_cache[i].model)
+          {
             return model_cache[i].model;
+          }
         }
     }
     borShutdown(1, "Fatal: can't find any player models!");
@@ -4880,9 +4892,8 @@ s_model *prevplayermodeln(s_model *current, int p)
         // check count of selectable players
         for(i = 0; i < models_cached; i++)
         {
-            if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
-                    (allow_secret_chars || !model_cache[i].model->secret) &&
-                    model_cache[i].model->clearcount <= bonus && model_cache[i].selectable)
+            if(model_cache[i].selectable &&
+              model_cache[i].clearcount <= bonus)
             {
                 ++player_count;
             }
@@ -4937,12 +4948,19 @@ s_model *prevplayermodelcol(s_model *current)
         {
             i = models_cached - 1;
         }
-        if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
-                (allow_secret_chars || !model_cache[i].model->secret) &&
-                model_cache[i].model->clearcount <= bonus && model_cache[i].selectable && model_cache[i].model->selectcol == current->selectcol)
+        if(model_cache[i].selectable &&
+          model_cache[i].clearcount <= bonus &&
+          model_cache[i].selectcol == current->selectcol)
         {
-            //printf("prev %s\n", model_cache[i].model->name);
+          // quickload
+          if (!model_cache[i].model)
+          {
+            load_cached_model(model_cache[i].name, "models.txt", 3, true);
+          }
+          if (model_cache[i].model)
+          {
             return model_cache[i].model;
+          }
         }
     }
     borShutdown(1, "Fatal: can't find any player models!");
@@ -4962,9 +4980,8 @@ s_model *prevplayermodelcoln(s_model *current, int p)
         // check count of selectable players
         for(i = 0; i < models_cached; i++)
         {
-            if(model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER &&
-                    (allow_secret_chars || !model_cache[i].model->secret) &&
-                    model_cache[i].model->clearcount <= bonus && model_cache[i].selectable)
+            if(model_cache[i].selectable &&
+              model_cache[i].clearcount <= bonus)
             {
                 ++player_count;
             }
@@ -5001,7 +5018,7 @@ static void reset_playable_list(char which)
     int i;
     for(i = 0; i < models_cached; i++)
     {
-        if(!which || (model_cache[i].model && model_cache[i].model->type == TYPE_PLAYER))
+        if(!which || (model_cache[i].player))
         {
             model_cache[i].selectable = which;
         }
@@ -5016,15 +5033,14 @@ static void load_playable_list(char *buf)
     ArgList arglist;
     char argbuf[MAX_ALLOWSELECT_LEN] = "";
 
-    if(strlen(allowselect_cmdline_args) > 0 && unlock_all)
+    if (cheatcode == -1)
     {
-      ParseArgs(&arglist, allowselect_cmdline_args, argbuf);
+      reset_playable_list(1);
+      return;
     }
-    else
-    {
-      ParseArgs(&arglist, buf, argbuf);
-    }
-    
+
+    ParseArgs(&arglist, buf, argbuf);
+
     // avoid to load characters if there isn't an allowselect
     if ( stricmp(value = GET_ARG(0), "allowselect") != 0 ) return;
 
@@ -5045,10 +5061,7 @@ static void load_playable_list(char *buf)
         {
             borShutdown(1, "Player model '%s' is not cached.\n", value);
         }
-        else if(model_cache[index].loadflag)
-        {
-            model_cache[index].selectable = 1;
-        }
+        model_cache[index].selectable = 1;
     }
 
     return;
@@ -6076,7 +6089,11 @@ void cache_model(char *name, char *path, int flag)
     model_cache[models_cached].path[len] = 0;
 
     model_cache[models_cached].loadflag = flag;
-    model_cache[models_cached].player = 0;
+    
+    // quickload
+    model_cache[models_cached].player = false;
+    model_cache[models_cached].clearcount = 0;
+    model_cache[models_cached].selectcol = 0;
 
     _peek_model_name(models_cached);
     ++models_cached;
@@ -8571,7 +8588,7 @@ void update_model_loadflag(s_model *model, char unload)
     model->unload = unload;
 }
 
-s_model *load_cached_model(char *name, char *owner, char unload)
+s_model *load_cached_model(char *name, char *owner, char unload, bool quickload)
 {
 
     #define LOG_CMD_TITLE   "%-20s"
@@ -8738,12 +8755,21 @@ s_model *load_cached_model(char *name, char *owner, char unload)
     modelCommands cmd;
     s_scripts *tempscripts;
 
+    bool command_skip_all = false;
+    bool command_skip_this = false;
+
 #ifdef DEBUG
     printf("load_cached_model: %s, unload: %d\n", name, unload);
 #endif
 
-    // Start up the standard log entry.
-    printf("Loaded '%s'", name);
+    if (quickload)
+    {
+      printf("Loaded quick '%s'", name);
+    }
+    else
+    {
+      printf("Loaded '%s'", name);
+    }
 
     // Model already loaded but we might want to unload after level is completed.
     if((tempmodel = findmodel(name)) != NULL)
@@ -8793,6 +8819,7 @@ s_model *load_cached_model(char *name, char *owner, char unload)
 
     newchar->hitwalltype = -1; // init to -1
 
+    newchar->quickload = quickload;
 
     //char* test = "load   knife 0";
     //ParseArgs(&arglist,test,argbuf);
@@ -8806,9 +8833,47 @@ s_model *load_cached_model(char *name, char *owner, char unload)
         {
             command = GET_ARG(0);
             cmd = getModelCommand(modelcmdlist, command);
+            command_skip_this = false;
 
             //if (cmd != CMD_MODEL_FRAME) framenum = 0;
 
+            if (quickload)
+            {
+              switch (cmd)
+              {
+                case CMD_MODEL_ANIM:
+                  if (strcmp(GET_ARG(1), "select") == 0 || strcmp(GET_ARG(1), "waiting") == 0)
+                  {
+                    command_skip_all = false;
+                  }
+                  else
+                  {
+                    command_skip_all = true;
+                    command_skip_this = true;
+                  }
+                  break;
+                case CMD_MODEL_NAME:
+                case CMD_MODEL_TYPE:
+                case CMD_MODEL_ICON:
+                case CMD_MODEL_SELECTCOL:
+                case CMD_MODEL_PALETTE:
+                case CMD_MODEL_ALTERNATEPAL:
+                case CMD_MODEL_LOOP:
+                case CMD_MODEL_DELAY:
+                case CMD_MODEL_OFFSET:
+                case CMD_MODEL_SOUND:
+                case CMD_MODEL_FSHADOW:
+                case CMD_MODEL_FRAME:
+                  command_skip_this = command_skip_all;
+                  break;
+                default:
+                  command_skip_this = true;
+                  break;
+              }
+            }
+
+            if (!command_skip_this)
+            {
             switch(cmd)
             {
             case CMD_MODEL_BACKPAIN:
@@ -8877,7 +8942,7 @@ s_model *load_cached_model(char *name, char *owner, char unload)
                 tempmodel = findmodel(value);
                 if(!tempmodel)
                 {
-                    load_cached_model(value, name, GET_INT_ARG(2));
+                    load_cached_model(value, name, GET_INT_ARG(2), false);
                 }
                 else
                 {
@@ -11542,7 +11607,7 @@ s_model *load_cached_model(char *name, char *owner, char unload)
                     }
                 }
             }
-
+        }
         }
         // Go to next line
         pos += getNewLineStart(buf + pos);
@@ -11810,8 +11875,6 @@ lCleanup:
 
     #undef LOG_CMD_TITLE
 }
-
-
 
 int is_set(s_model *model, int m)      // New function to determine if a freespecial has been set
 {
@@ -12322,7 +12385,7 @@ int load_models()
         init_colourtable();
     }
 
-    update_loading(&loadingbg[0], -1, 1); // initialize the update screen
+    update_loading(&loadingbg[0], 0, 1); // initialize the update screen
 
     if(custModels != NULL)
     {
@@ -12484,9 +12547,7 @@ int load_models()
 
     // Defer load_cached_model, so you can define models after their nested model.
     printf("\n");
-    
-    update_players_loadflag(&modelLoadCount);
-    
+
     for(i = 0, pos = 0; i < models_cached; i++)
     {
         //printf("Checking '%s' '%s'\n", model_cache[i].name, model_cache[i].path);
@@ -12496,8 +12557,8 @@ int load_models()
         }
         if(model_cache[i].loadflag)
         {
-            load_cached_model(model_cache[i].name, "models.txt", 0);
-            update_loading(&loadingbg[0], ++pos, modelLoadCount);
+          preload_cached_model(model_cache[i].name);
+          update_loading(&loadingbg[0], ++pos, modelLoadCount);
         }
     }
     printf("\nLoading models...............\tDone!\n");
@@ -12511,7 +12572,7 @@ int load_models()
     return 1;
 }
 
-void update_players_loadflag(int *modelLoadCount)
+void identify_selectable_players()
 {
   char *buf, *value;
   size_t size = 0;
@@ -12528,6 +12589,7 @@ void update_players_loadflag(int *modelLoadCount)
       if(level->type == LE_TYPE_SELECT_SCREEN)
       {
         buffer_pakfile(level->filename, &buf, &size);
+        pos = 0;
         while(pos < size)
         {
           ParseArgs(&arglist, buf + pos, argbuf);
@@ -12541,7 +12603,7 @@ void update_players_loadflag(int *modelLoadCount)
                 int model_index = get_cached_model_index(value);
                 if(model_index >= 0)
                 {
-                 model_cache[model_index].player = 1;
+                  model_cache[model_index].selectable = 1;
                 }
               }
             }
@@ -12551,32 +12613,63 @@ void update_players_loadflag(int *modelLoadCount)
       }
     }
   }
-    
-  ParseArgs(&arglist, allowselect_cmdline_args, argbuf);
-  allowselect_cmdline_args[0] = '\0';
-  for(int arg_index = 0; (value = GET_ARG(arg_index))[0]; arg_index++)
+}
+
+void preload_cached_model(char *name)
+{
+  char *filename, *buf, *command;
+  char argbuf[MAX_ARG_LEN + 1] = {""};
+  ArgList arglist;
+  size_t size = 0;
+  ptrdiff_t pos = 0;   
+  modelCommands cmd;
+  bool exit = false;
+  
+  int model_index = get_cached_model_index(name);
+  if(model_index >= 0)
   {
-    int found_model_index = get_cached_model_index(value);
-    if(found_model_index >= 0)
+    filename = model_cache[model_index].path;
+    
+    if(buffer_pakfile(filename, &buf, &size) != 1)
     {
-      model_cache[found_model_index].loadflag = 1;
-      if(strlen(allowselect_cmdline_args) == 0)
+        return;
+        borShutdown(1, "Unable to open file '%s'\n\n", filename);
+    }
+    
+    while(!exit)
+    {
+      if(ParseArgs(&arglist, buf + pos, argbuf))
       {
-        printf("Player Char: %s\n", value);
-        strcat(allowselect_cmdline_args, "allowselect");
-        for(int model_index = 0; model_index < models_cached; ++model_index)
-        {
-          if(model_cache[model_index].player && stricmp(model_cache[model_index].name, value) != 0)
+          command = GET_ARG(0);
+          cmd = getModelCommand(modelcmdlist, command);
+          switch(cmd)
           {
-            model_cache[model_index].loadflag = 0;
-            printf("Player Char: %s\n", model_cache[model_index].name);
+          case CMD_MODEL_SECRET:
+            model_cache[model_index].clearcount = GET_INT_ARG(2);
+            break;
+          case CMD_MODEL_SELECTCOL:
+            model_cache[model_index].selectcol = GET_INT_ARG(1);
+            break;
+          case CMD_MODEL_TYPE:
+            if (stricmp(GET_ARG(1), "player") == 0 && model_cache[model_index].selectcol > 0)
+            {
+              model_cache[model_index].selectable = 1;
+            }
+            exit = true;
+            break;
+          default:
+            break;
           }
-        }
       }
-      strcat(allowselect_cmdline_args, " ");
-      strcat(allowselect_cmdline_args, value);
+      pos += getNewLineStart(buf + pos);
     }
   }
+}
+
+void unload_model(s_model *model)
+{
+    cache_model_sprites(model, 0);
+    free_model(model);
 }
 
 void unload_levelorder()
@@ -14448,7 +14541,7 @@ void load_level(char *filename)
         init_colourtable();
     }
 
-    update_loading(&loadingbg[1], -1, 1); // initialize the update screen
+    update_loading(&loadingbg[1], 0, 1); // initialize the update screen
 
     memset(&next, 0, sizeof(next));
 
@@ -14532,7 +14625,7 @@ void load_level(char *filename)
             standard_palette(1);
             lifebar_colors();
             init_colourtable();
-            update_loading(&bgPosi, -1, 1); // initialize the update screen
+            update_loading(&bgPosi, 0, 1); // initialize the update screen
             break;
         case CMD_LEVEL_MUSICFADE:
             memset(&next, 0, sizeof(next));
@@ -14591,7 +14684,7 @@ void load_level(char *filename)
             tempmodel = findmodel(GET_ARG(1));
             if (!tempmodel)
             {
-                load_cached_model(GET_ARG(1), filename, GET_INT_ARG(2));
+                load_cached_model(GET_ARG(1), filename, GET_INT_ARG(2), false);
             }
             else
             {
@@ -15210,7 +15303,7 @@ void load_level(char *filename)
             }
             else
             {
-                tempmodel = load_cached_model(GET_ARG(1), filename, 3);
+                tempmodel = load_cached_model(GET_ARG(1), filename, 3, false);
             }
             if(tempmodel)
             {
@@ -15329,7 +15422,7 @@ void load_level(char *filename)
             }
             else
             {
-                tempmodel = load_cached_model(GET_ARG(1), filename, 3);
+                tempmodel = load_cached_model(GET_ARG(1), filename, 3, false);
             }
             if(tempmodel)
             {
@@ -15356,7 +15449,7 @@ void load_level(char *filename)
             }
             else
             {
-                tempmodel = load_cached_model(GET_ARG(1), filename, 3);
+                tempmodel = load_cached_model(GET_ARG(1), filename, 3, false);
             }
             if(tempmodel)
             {
@@ -15949,6 +16042,7 @@ void updatestatus()
     int i;
     s_model *model = NULL;
     s_set_entry *set = levelsets + current_set;
+    char* name = NULL;
 
     for(i = 0; i < set->maxplayers; i++)
     {
@@ -15959,7 +16053,7 @@ void updatestatus()
         else if(player[i].joining && player[i].name[0])
         {
             model = findmodel(player[i].name);
-            if((player[i].playkeys & FLAG_ANYBUTTON || skipselect[i][0]) && !freezeall && !nojoin)    // Can't join while animations are frozen
+            if((player[i].playkeys & (FLAG_START | FLAG_ATTACK) || skipselect[i][0]) && !freezeall && !nojoin)    // Can't join while animations are frozen
             {
                 player[i].lives = PLAYER_LIVES;            // to address new lives settings
                 player[i].joining = 0;
@@ -15996,7 +16090,16 @@ void updatestatus()
             // don't like a characters color try a new one!
             else if(player[i].playkeys & (FLAG_MOVEUP | FLAG_MOVEDOWN) && colourselect)
             {
-                player[i].colourmap = ((player[i].playkeys & FLAG_MOVEUP) ? nextcolourmapn : prevcolourmapn)(model, player[i].colourmap, i);
+                model = ((player[i].playkeys & FLAG_MOVEUP) ? prevplayermodelcoln : nextplayermodelcoln)(model, i);
+                strcpy(player[i].name, model->name);
+
+                player[i].colourmap = (colourselect && (set->nosame & 2)) ? nextcolourmapn(model, -1, i) : 0;
+
+                player[i].playkeys = 0;
+            }
+            else if (player[i].playkeys & (FLAG_JUMP | FLAG_SPECIAL) && colourselect)
+            {
+                player[i].colourmap = ((player[i].playkeys & FLAG_JUMP) ? nextcolourmapn : prevcolourmapn)(model, player[i].colourmap, i);
 
                 player[i].playkeys = 0;
             }
@@ -16006,7 +16109,27 @@ void updatestatus()
             if(player[i].playkeys & FLAG_START)
             {
                 player[i].lives = 0;
-                model = skipselect[i][0] ? findmodel(skipselect[i]) : nextplayermodeln(NULL, i);
+                
+                if(skipselect[i][0])
+                {
+                    name = skipselect[i];
+                }
+                else if(player[i].name[0])
+                {
+                    name = player[i].name;
+                }
+                else
+                {
+                    model = nextplayermodeln(NULL, i);
+                }
+                if(!model && name)
+                {
+                    model = findmodel(name);
+                    if(!model)
+                    {
+                        model = load_cached_model(name, "models.txt", 3, true);
+                    }
+                }
                 strncpy(player[i].name, model->name, MAX_NAME_LEN);
 
                 player[i].colourmap = (colourselect && (set->nosame & 2)) ? nextcolourmapn(model, -1, i) : 0;
@@ -18250,20 +18373,39 @@ entity *spawn(float x, float z, float a, int direction, char *name, int index, s
     float *ofs;
     Varlist *vars;
     s_scripts *scripts;
+    int count_frames = 0;
+    s_anim *anim = NULL;
 
     if(!model)
     {
         if(index < 0 && name)
         {
-            index = get_cached_model_index(name);
+          index = get_cached_model_index(name);
         }
         if(index >= 0)
         {
-            model = model_cache[index].model;
-            if(!model)
+          model = model_cache[index].model;
+          if(!model)
+          {
+            model = load_cached_model(model_cache[index].name, "models.txt", 3, false);
+            if(model)
             {
-              model = load_cached_model(model_cache[index].name, "models.txt", 3);
+              count_frames = 0;
+              for(i = 0; i < max_animations; ++i)
+              {
+                anim = model->animation[i];
+                if(anim)
+                {
+                  count_frames += anim->numframes;
+                }
+              }
+              if(count_frames > 10 && model->type != TYPE_TEXTBOX)
+              {
+                update_model_loadflag(model, 0);
+                printf("Locked in memory model %s with %d frames\n", model->name, count_frames);
+              }
             }
+          }
         }
     }
 
@@ -22762,10 +22904,18 @@ void set_model_ex(entity *ent, char *modelname, int index, s_model *newmodel, in
         if(index >= 0)
         {
             newmodel = model_cache[index].model;
+            if (!newmodel)
+            {
+              newmodel = load_cached_model(model_cache[index].name, "models.txt", 3, false);
+            }
         }
         else
         {
             newmodel = findmodel(modelname);
+            if (!newmodel)
+            {
+              newmodel = load_cached_model(modelname, "models.txt", 3, false);
+            }
         }
     }
     if(!newmodel)
@@ -32566,13 +32716,19 @@ int is_incam(float x, float z, float a, float threshold)
 void spawnplayer(int index)
 {
     s_spawn_entry p;
-    //s_model * model = NULL;
+    s_model *model = NULL;
     int wall;
     int xc, zc, find = 0;
     index &= 3;
 
 //    model = find_model(player[index].name);
 //    if(model == NULL) return;
+    model = findmodel(player[index].name);
+    if(model && model->quickload)
+    {
+      unload_model(model);
+      load_cached_model(player[index].name, "models.txt", 3, false);
+    }
 
     memset(&p, 0, sizeof(p));
     p.name = player[index].name;
@@ -35912,7 +36068,7 @@ int selectplayer(int *players, char *filename, int useSavedGame)
                     tempmodel = findmodel(GET_ARG(1));
                     if (!tempmodel)
                     {
-                        load_cached_model(GET_ARG(1), filename, GET_INT_ARG(2));
+                        load_cached_model(GET_ARG(1), filename, GET_INT_ARG(2), false);
                     }
                     else
                     {
@@ -38841,11 +38997,7 @@ void openborMain(int argc, char **argv)
     int argl;
 
     printf("OpenBoR %s Compile Date: " __DATE__ "\n\n", VERSION);
-    
-    // Add pak name as allowselect args
-    getPakName(allowselect_cmdline_args, -1);
-    strcat(allowselect_cmdline_args, " ");
-    
+
     if(argc > 1)
     {
         argl = strlen(argv[1]);
@@ -38859,18 +39011,11 @@ void openborMain(int argc, char **argv)
         }
         
         argl = strlen(argv[argc - 1]);
-        if(argl == 10 && !memcmp(argv[argc - 1], "unlock_all", 10))
+        if(argl > 10 && !memcmp(argv[argc - 1], "cheatcode=", 10))
         {
-          unlock_all = 1;
-          bonus = 999;
-          finisheds_games_count = bonus;
-          printf("All secrets unlocked\n");
-        }
-        
-        for(int i = 1; i < argc; ++i)
-        {
-          strcat(allowselect_cmdline_args, argv[i]);
-          strcat(allowselect_cmdline_args, " ");
+          cheatcode = getValidInt((char *)argv[argc - 1] + 10, "", "");
+          bonus = cheatcode >= 0 ? cheatcode : 999;
+          printf("cheatcode=%d\n", cheatcode);
         }
     }
     
