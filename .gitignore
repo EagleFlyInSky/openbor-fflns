@@ -3,4 +3,7 @@
 *.Td
 OpenBOR.elf
 meta.xml
+engine/.vscode/*.log
 engine/releases/
+engine/android/
+tools/

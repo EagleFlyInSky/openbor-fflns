@@ -1,0 +1,33 @@
+{
+    "makefile.extensionOutputFolder": "./.vscode",
+    "makefile.buildBeforeLaunch": false,
+    "makefile.configurations": [
+        {
+            "name": "WIN DEBUG",
+            "makeArgs": [
+                "BUILD_WIN=0",
+                "SDKPATH=../tools/win-sdk"
+            ]
+        },
+        {
+            "name": "WIN RELEASE",
+            "makeArgs": [
+                "BUILD_WIN=1",
+                "TOOLS=../tools/bin;../tools/7-Zip;../tools/svn/bin",
+                "PATH=$TOOLS",
+                "WINDEV=../tools/win-sdk/bin",
+                "SDKPATH=../tools/win-sdk",
+                "EXTENSION=.exe",
+                "PATH=$TOOLS:$WINDEV"
+            ]
+        }
+    ],
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "${workspaceFolder}/releases/WINDOWS/OpenBOR",
+            "binaryPath": "${workspaceFolder}/OpenBOR.exe",
+            "binaryArgs": [],
+            "MIMode": "gdb"
+        }
+    ]
+}

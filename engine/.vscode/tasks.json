@@ -1,0 +1,79 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "options": {
+        "env": {
+            "PATH": "../tools/bin;${env:PATH}"
+        }
+    },
+    "tasks": [
+        {
+            "label": "WIN RELEASE",
+            "type": "shell",
+            "command": "bash.exe build.sh 5",
+            "dependsOn": [
+                "WIN SDK"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "WIN DEBUG",
+            "type": "shell",
+            "command": "bash.exe build.sh 5",
+            "options": {
+                "env": {
+                    "PATH": "../tools/bin;${env:PATH}",
+                    "BUILD_DEBUG": "1"
+                }
+            },
+            "dependsOn": [
+                "WIN SDK"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "WIN SDK",
+            "type": "shell",
+            "command": "bash.exe environ.sh 15",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "ANDROID",
+            "type": "process",
+            "command": "build.bat",
+            "options": {
+                "cwd": "${workspaceFolder}/android",
+                "env": 
+                {
+                    "PATH": "C:/android/sdk/ndk-bundle;C:/apache-ant-1.10.6/bin;${env:PATH}",
+                    "JAVA_HOME": "C:/Program Files/Java/jdk1.8.0_221",
+                    "ANDROID_HOME": "C:/android/sdk"
+                }
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "PSP",
+            "type": "shell",
+            "command": "bash.exe build.sh 1",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build"
+            }
+        }
+    ]
+}

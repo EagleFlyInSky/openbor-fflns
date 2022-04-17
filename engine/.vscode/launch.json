@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "debug OpenBOR.exe",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/releases/WINDOWS/Openbor/OpenBOR.exe",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/releases/WINDOWS/Openbor",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "${workspaceFolder}/../tools/win-sdk/bin/gdb.exe",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+          }
+        ],
+        "preLaunchTask": "WIN DEBUG"
+      }
+    ]
+  }
