@@ -4691,7 +4691,7 @@ s_model *nextplayermodel(s_model *current)
           // quickload
           if(!model_cache[i].model)
           {
-            load_cached_model(model_cache[i].name, "models.txt", 3, true);
+            load_cached_model(model_cache[i].name, "select_screen", 3, true);
           }
           if(model_cache[i].model)
           {
@@ -4779,7 +4779,7 @@ s_model *nextplayermodelcol(s_model *current)
           // quickload
           if (!model_cache[i].model)
           {
-            load_cached_model(model_cache[i].name, "models.txt", 3, true);
+            load_cached_model(model_cache[i].name, "select_screen", 3, true);
           }
           if (model_cache[i].model)
           {
@@ -4867,7 +4867,7 @@ s_model *prevplayermodel(s_model *current)
           // quickload
           if (!model_cache[i].model)
           {
-            load_cached_model(model_cache[i].name, "models.txt", 3, true);
+            load_cached_model(model_cache[i].name, "select_screen", 3, true);
           }
           if (model_cache[i].model)
           {
@@ -4955,7 +4955,7 @@ s_model *prevplayermodelcol(s_model *current)
           // quickload
           if (!model_cache[i].model)
           {
-            load_cached_model(model_cache[i].name, "models.txt", 3, true);
+            load_cached_model(model_cache[i].name, "select_screen", 3, true);
           }
           if (model_cache[i].model)
           {
@@ -8942,12 +8942,12 @@ s_model *load_cached_model(char *name, char *owner, char unload, bool quickload)
                 tempmodel = findmodel(value);
                 if(!tempmodel)
                 {
-                    load_cached_model(value, name, GET_INT_ARG(2), false);
+                    load_cached_model(value, name, 3, false);
                 }
-                else
-                {
-                    update_model_loadflag(tempmodel, GET_INT_ARG(2));
-                }
+                // else
+                // {
+                //     update_model_loadflag(tempmodel, GET_INT_ARG(2));
+                // }
                 break;
             case CMD_MODEL_SCORE:
                 newchar->score = GET_INT_ARG(1);
@@ -14684,12 +14684,12 @@ void load_level(char *filename)
             tempmodel = findmodel(GET_ARG(1));
             if (!tempmodel)
             {
-                load_cached_model(GET_ARG(1), filename, GET_INT_ARG(2), false);
+                load_cached_model(GET_ARG(1), filename, 3, false);
             }
-            else
-            {
-                update_model_loadflag(tempmodel, GET_INT_ARG(2));
-            }
+            // else
+            // {
+            //     update_model_loadflag(tempmodel, GET_INT_ARG(2));
+            // }
             break;
         case CMD_LEVEL_ALPHAMASK:
             strncpy(maskPath, GET_ARG(1), MAX_BUFFER_LEN - 1);
@@ -16127,7 +16127,7 @@ void updatestatus()
                     model = findmodel(name);
                     if(!model)
                     {
-                        model = load_cached_model(name, "models.txt", 3, true);
+                        model = load_cached_model(name, "continue_screen", 3, true);
                     }
                 }
                 strncpy(player[i].name, model->name, MAX_NAME_LEN);
@@ -18387,7 +18387,7 @@ entity *spawn(float x, float z, float a, int direction, char *name, int index, s
           model = model_cache[index].model;
           if(!model)
           {
-            model = load_cached_model(model_cache[index].name, "models.txt", 3, false);
+            model = load_cached_model(model_cache[index].name, "spawn", 3, false);
             if(model)
             {
               count_frames = 0;
@@ -22906,7 +22906,7 @@ void set_model_ex(entity *ent, char *modelname, int index, s_model *newmodel, in
             newmodel = model_cache[index].model;
             if (!newmodel)
             {
-              newmodel = load_cached_model(model_cache[index].name, "models.txt", 3, false);
+              newmodel = load_cached_model(model_cache[index].name, "change_model", 3, false);
             }
         }
         else
@@ -22914,7 +22914,7 @@ void set_model_ex(entity *ent, char *modelname, int index, s_model *newmodel, in
             newmodel = findmodel(modelname);
             if (!newmodel)
             {
-              newmodel = load_cached_model(modelname, "models.txt", 3, false);
+              newmodel = load_cached_model(modelname, "change_model", 3, false);
             }
         }
     }
@@ -32727,7 +32727,7 @@ void spawnplayer(int index)
     if(model && model->quickload)
     {
       unload_model(model);
-      load_cached_model(player[index].name, "models.txt", 3, false);
+      load_cached_model(player[index].name, "spawn_player", 3, false);
     }
 
     memset(&p, 0, sizeof(p));
@@ -36068,12 +36068,12 @@ int selectplayer(int *players, char *filename, int useSavedGame)
                     tempmodel = findmodel(GET_ARG(1));
                     if (!tempmodel)
                     {
-                        load_cached_model(GET_ARG(1), filename, GET_INT_ARG(2), false);
+                        load_cached_model(GET_ARG(1), filename, 3, false);
                     }
-                    else
-                    {
-                        update_model_loadflag(tempmodel, GET_INT_ARG(2));
-                    }
+                    // else
+                    // {
+                    //     update_model_loadflag(tempmodel, GET_INT_ARG(2));
+                    // }
                     // SAVE
                     if(load_count < MAX_SELECT_LOADS)
                     {

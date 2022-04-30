@@ -14205,7 +14205,7 @@ HRESULT openbor_loadmodel(ScriptVariant **varlist , ScriptVariant **pretvar, int
             goto loadmodel_error;
         }
 
-    model = load_cached_model(StrCache_Get(varlist[0]->strVal), "openbor_loadmodel", (char)unload, false);
+    model = load_cached_model(StrCache_Get(varlist[0]->strVal), "openbor_loadmodel", 3, false);
 
     if(paramCount >= 3 && model)
     {
