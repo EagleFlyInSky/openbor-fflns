@@ -36592,7 +36592,8 @@ int menu_difficulty()
 {
     int quit = 0;
     int selector = 0;
-    int maxdisplay = 9; //TAG_YO cambiado el máximo de opciones que se puedes mostrar de forma simultanea en el menú de selección de modos
+    int maxdisplay = 14; //TAG_YO cambiado el máximo de opciones que se puedes mostrar de forma simultanea en el menú de selección de modos
+    int init_menu_y = -5;
     int i, j, t;
     //float slider = 0;
     int barx, bary, barw, barh;
@@ -36620,17 +36621,17 @@ int menu_difficulty()
                 {
                     if(bonus >= levelsets[i].ifcomplete)
                     {
-                        _menutextm((selector == i), j-2, 0, "%s", levelsets[i].name);
+                        _menutextm((selector == i), init_menu_y + j, 0, "%s", levelsets[i].name);
                     }
                     else
                     {
                         if(levelsets[i].ifcomplete > 1)
                         {
-                            _menutextm((selector == i), j-2, 0, Tr("%s - Finish Game %i Times To UnLock"), levelsets[i].name, levelsets[i].ifcomplete);
+                            _menutextm((selector == i), init_menu_y + j, 0, Tr("%s - Finish Game %i Times To UnLock"), levelsets[i].name, levelsets[i].ifcomplete);
                         }
                         else
                         {
-                            _menutextm((selector == i), j-2, 0, Tr("%s - Finish Game To UnLock"), levelsets[i].name);
+                            _menutextm((selector == i), init_menu_y + j, 0, Tr("%s - Finish Game To UnLock"), levelsets[i].name);
                         }
                     }
                 }
@@ -36639,7 +36640,7 @@ int menu_difficulty()
                     break;
                 }
             }
-            _menutextm((selector == i), 8, 0, Tr("Back"));
+            _menutextm((selector == i), init_menu_y + MIN(num_difficulties, maxdisplay) + 3, 0, Tr("Back"));
 
             //draw the scroll bar
             if(num_difficulties > maxdisplay)
