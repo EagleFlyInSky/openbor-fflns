@@ -16043,6 +16043,7 @@ void updatestatus()
     s_model *model = NULL;
     s_set_entry *set = levelsets + current_set;
     char* name = NULL;
+    int prev_color = -1;
 
     for(i = 0; i < set->maxplayers; i++)
     {
@@ -16117,6 +16118,7 @@ void updatestatus()
                 else if(player[i].name[0])
                 {
                     name = player[i].name;
+                    prev_color = player[i].colourmap;
                 }
                 else
                 {
@@ -16132,7 +16134,15 @@ void updatestatus()
                 }
                 strncpy(player[i].name, model->name, MAX_NAME_LEN);
 
-                player[i].colourmap = (colourselect && (set->nosame & 2)) ? nextcolourmapn(model, -1, i) : 0;
+                if(prev_color >= 0)
+                {
+                    --prev_color;
+                    if(prev_color < 0)
+                    {
+                        prev_color = model->maps_loaded;
+                    }
+                }
+                player[i].colourmap = (colourselect && (set->nosame & 2)) ? nextcolourmapn(model, prev_color, i) : 0;
 
                 player[i].joining = 1;
                 player[i].disablekeys = player[i].playkeys = player[i].newkeys = player[i].releasekeys = 0;
