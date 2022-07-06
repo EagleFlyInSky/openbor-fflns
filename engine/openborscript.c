@@ -7982,7 +7982,7 @@ HRESULT openbor_changeplayerproperty(ScriptVariant **varlist , ScriptVariant **p
     {
         if(SUCCEEDED(ScriptVariant_IntegerValue(arg, &ltemp)))
         {
-            player[index].hasplayed = (LONG)ltemp;
+            player[index].hasplayed = players[index] = (LONG)ltemp;
         }
         else
         {

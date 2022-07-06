@@ -744,6 +744,7 @@ int                 ent_count			= 0;					// log count of entites
 int                 ent_max				= 0;
 
 s_player            player[MAX_PLAYERS];
+int                 players[MAX_PLAYERS] = {0, 0, 0, 0};
 u64                 bothkeys, bothnewkeys;
 
 s_playercontrols    playercontrols1;
@@ -16110,6 +16111,7 @@ void updatestatus()
             if(player[i].playkeys & FLAG_START)
             {
                 player[i].lives = 0;
+                players[i] = 1;
                 
                 if(skipselect[i][0])
                 {
@@ -36033,6 +36035,7 @@ int selectplayer(int *players, char *filename, int useSavedGame)
     for(i = 0; i < set->maxplayers; i++)
     {
         player[i].hasplayed = players[i];
+        if (player[i].hasplayed) strcpy(player[i].name, "dummy");
     }
 
     for(i = 0; i < set->maxplayers; i++)
@@ -36206,7 +36209,6 @@ int selectplayer(int *players, char *filename, int useSavedGame)
     {
         if(players[i])
         {
-            example[i] = spawnexample(i);
             player[i].playkeys = 0;
             if(defaultselect)
             {
@@ -36230,6 +36232,11 @@ int selectplayer(int *players, char *filename, int useSavedGame)
                 if(noshare) player[i].credits = savelevel[current_set].pCredits[i];
                 else credits = savelevel[current_set].credits;
             }
+
+            if(player[i].lives > 0)
+            {
+                example[i] = spawnexample(i);
+            }
         }
     }
 
@@ -36242,15 +36249,16 @@ int selectplayer(int *players, char *filename, int useSavedGame)
         {
             if(!ready[i])
             {
-                if(!player[i].hasplayed && (noshare || credits > 0) && (player[i].newkeys & FLAG_ANYBUTTON))
+                if(!example[i] && (player[i].credits || credits || (!player[i].hasplayed && noshare)) && (player[i].newkeys & FLAG_ANYBUTTON))
                 {
-                    players[i] = player[i].hasplayed = 1;
                     //printf("%d %d %d\n", i, player[i].lives, immediate[i]);
 
-                    if(noshare)
+                    if(!player[i].hasplayed && noshare)
                     {
                         player[i].credits = CONTINUES;
                     }
+
+                    players[i] = player[i].hasplayed = 1;
 
                     if(!creditscheat)
                     {
@@ -36419,6 +36427,7 @@ void playgame(int *players,  unsigned which_set, int useSavedGame)
                 player[i].weapnum = save->pWeapnum[i];
                 player[i].spawnhealth = save->pSpawnhealth[i];
                 player[i].spawnmp = save->pSpawnmp[i];
+                player[i].hasplayed = players[i] = save->pName[i][0] ? 1 : 0;
                 strncpy(player[i].name, save->pName[i], MAX_NAME_LEN);
             }
             credits = save->credits;
@@ -36487,10 +36496,6 @@ void playgame(int *players,  unsigned which_set, int useSavedGame)
                     {
                         skipselect[i][0] = 0;
                     }
-                }
-                for(i = 0; i < set->maxplayers ; i++)
-                {
-                    players[i] = (player[i].lives > 0);
                 }
                 if(selectplayer(players, le->filename, useSavedGame) == 0)
                 {
@@ -39003,7 +39008,6 @@ void openborMain(int argc, char **argv)
     u32 introtime = 0;
     int started = 0;
     char tmpBuff[MAX_BUFFER_LEN] = {""};
-    int players[MAX_PLAYERS] = {0, 0, 0, 0};
     int i;
     int argl;
 
