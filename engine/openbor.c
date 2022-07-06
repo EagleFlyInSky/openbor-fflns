@@ -24142,11 +24142,11 @@ entity *drop_item(entity *e)
         }
         if(!(level->scrolldir & (SCROLL_UP | SCROLL_DOWN)))
         {
-            if(item->position.z - item->position.y < advancey)
+            if(item->position.z < advancey)
             {
                 item->position.z = advancey + 10;
             }
-            else if(item->position.z - item->position.y > advancey + videomodes.vRes)
+            else if(item->position.z > advancey + videomodes.vRes)
             {
                 item->position.z = advancey + videomodes.vRes - 10;
             }
