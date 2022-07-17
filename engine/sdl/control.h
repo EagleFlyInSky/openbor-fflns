@@ -139,7 +139,7 @@ typedef struct{
 	int		kb_break;
 }s_playercontrols;
 
-void open_joystick(int i);
+int open_joystick(int i);
 void close_joystick(int i);
 void control_exit();
 void control_init(int joy_enable);
