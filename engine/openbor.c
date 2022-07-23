@@ -36416,6 +36416,10 @@ void playgame(int *players,  unsigned which_set, int useSavedGame)
         }
         current_level = save->level;
         current_stage = save->stage;
+        if ( current_level >= set->numlevels )
+        {
+            return;
+        }
         if(save->flag == 2) // don't check 1 or 0 becuase if we use saved game the flag must be >0
         {
             for(i = 0; i < set->maxplayers; i++)
@@ -36575,6 +36579,7 @@ void playgame(int *players,  unsigned which_set, int useSavedGame)
         if(current_level >= set->numlevels)
         {
             bonus += save->times_completed++;
+            save->level = current_level;
             saveGameFile();
             if(!nofadeout)
             {
@@ -36584,6 +36589,7 @@ void playgame(int *players,  unsigned which_set, int useSavedGame)
             {
                 hallfame(1);
             }
+            memset(player, 0, sizeof(*player) * 4);
         }
     }
 
