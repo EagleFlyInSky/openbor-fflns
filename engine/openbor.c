@@ -35738,6 +35738,7 @@ void savelevelinfo()
     s_set_entry *set = levelsets + current_set;
     s_savelevel *save = savelevel + current_set;
 
+    save->compatibleversion = CV_SAVED_GAME;
     save->flag = set->saveflag;
     // don't check flag here save all info, for simple logic
     for(i = 0; i < set->maxplayers; i++)
@@ -36743,6 +36744,7 @@ int load_saved_game()
     int quit = 0;
     int selector = 0;
     int savedStatus = 0;
+    bool allow_load = true;
     char name[MAX_BUFFER_LEN] = {""};
     int col1 = -8, col2 = 6;
 
@@ -36785,27 +36787,46 @@ int load_saved_game()
             if(savedStatus)
             {
                 _menutext((selector == 0), col1, -1, Tr("Mode:"));
-                _menutext((selector == 0), col2, -1, "%s", savelevel[saveslot].dName);
-                _menutext(0, col1, 0, Tr("Stage:"));
-                _menutext(0, col2, 0, "%d", savelevel[saveslot].stage);
-                _menutext(0, col1, 1, Tr("Level:"));
-                _menutext(0, col2, 1, "%d", savelevel[saveslot].level);
-                _menutext(0, col1, 2, Tr("Credits:"));
 
-                if(noshare){
-                    _menutext(0, col2, 2, "%d/%d/%d/%d",
-                                  savelevel[saveslot].pCredits[0],
-                                  savelevel[saveslot].pCredits[1], savelevel[saveslot].pCredits[2],
-                                  savelevel[saveslot].pCredits[3]);
-                } else {
-                    _menutext(0, col2, 2, "%d", savelevel[saveslot].credits);
+                allow_load = true;
+                // Don't load finished saves
+                if(savelevel[saveslot].level >= levelsets[saveslot].numlevels)
+                {
+                    allow_load = false;
+                    _menutext(0, col2, -1, "%s", savelevel[saveslot].dName);
+                    _menutext(0, col2, 0, "(Finished)");
                 }
+                // Don't load saves with a different version
+                else if(savelevel[saveslot].compatibleversion != CV_SAVED_GAME)
+                {
+                    allow_load = false;
+                    _menutext(0, col2, -1, "%s", savelevel[saveslot].dName);
+                    _menutext(0, col2, 0, "(Incompatible)");
+                }
+                else
+                {
+                    _menutext((selector == 0), col2, -1, "%s", savelevel[saveslot].dName);
+                    _menutext(0, col1, 0, Tr("Stage:"));
+                    _menutext(0, col2, 0, "%d", savelevel[saveslot].stage);
+                    _menutext(0, col1, 1, Tr("Level:"));
+                    _menutext(0, col2, 1, "%d", savelevel[saveslot].level);
+                    _menutext(0, col1, 2, Tr("Credits:"));
 
-                _menutext(0, col1, 3, Tr("Player Lives:"));
-                _menutext(0, col2, 3, "%d/%d/%d/%d",
-                          savelevel[saveslot].pLives[0],
-                          savelevel[saveslot].pLives[1], savelevel[saveslot].pLives[2],
-                          savelevel[saveslot].pLives[3]);
+                    if(noshare){
+                        _menutext(0, col2, 2, "%d/%d/%d/%d",
+                                    savelevel[saveslot].pCredits[0],
+                                    savelevel[saveslot].pCredits[1], savelevel[saveslot].pCredits[2],
+                                    savelevel[saveslot].pCredits[3]);
+                    } else {
+                        _menutext(0, col2, 2, "%d", savelevel[saveslot].credits);
+                    }
+
+                    _menutext(0, col1, 3, Tr("Player Lives:"));
+                    _menutext(0, col2, 3, "%d/%d/%d/%d",
+                            savelevel[saveslot].pLives[0],
+                            savelevel[saveslot].pLives[1], savelevel[saveslot].pLives[2],
+                            savelevel[saveslot].pLives[3]);
+                }
             }
             _menutextm((selector == 1), 6, 0, Tr("Back"));
         }
@@ -36875,13 +36896,17 @@ int load_saved_game()
 
         if((bothnewkeys & FLAG_ANYBUTTON))
         {
-            sound_play_sample(SAMPLE_BEEP2, 0, savedata.effectvol, savedata.effectvol, 100);
             switch(selector)
             {
             case 0:
-                return saveslot;
+                if(allow_load)
+                {
+                    sound_play_sample(SAMPLE_BEEP2, 0, savedata.effectvol, savedata.effectvol, 100);
+                    return saveslot;
+                }
                 break;
             case 1:
+                sound_play_sample(SAMPLE_BEEP2, 0, savedata.effectvol, savedata.effectvol, 100);
                 quit = 1;
                 break;
             }
