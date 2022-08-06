@@ -89,6 +89,7 @@
 #define		MAX_CACHED_BACKGROUNDS 9
 #define     MAX_DOTS            10                  // Max active dot effects.
 #define     MAX_ARG_COUNT       128             //MIO cambio del valor original 64, para aumentar el tamaño máximo de personajes
+#define     MAX_ATTACK_IDS      100             // Max amount of memorized attack ids
 
 /*
 Note: the min Z coordinate of the player is important
@@ -2078,6 +2079,7 @@ typedef struct
     int nomove; // Flag for static enemies
     int noflip; // Flag to determine if static enemies flip or stay facing the same direction
     int nodrop; // Flag to determine if enemies can be knocked down
+    int noexplode; // Flag to determine if a bomb projectile should explode when performing an attack
     int nodieblink; // Flag to determine if blinking while playing die animation
     int holdblock; // Continue the block animation as long as the player holds the button down
     int nopassiveblock; // Don't auto block randomly
@@ -2220,6 +2222,7 @@ typedef struct
     s_scripts *scripts;
     int selectcol; //almacena la columna que usará el personaje en la pantalla de selección.
     bool quickload;
+    int ignore_projectile_wall_collision;
 } s_model;
 
 typedef struct
@@ -2420,10 +2423,8 @@ typedef struct entity
     void (*takeaction)();
     int (*takedamage)(struct entity *, s_collision_attack *, int);
     int (*trymove)(float, float);
-    unsigned int attack_id_incoming;
-    unsigned int attack_id_incoming2; //Variables agregas para memorizar las últimas 4 cajas de impactos y evitar el bug del "chorricombo"
-    unsigned int attack_id_incoming3;
-    unsigned int attack_id_incoming4;
+    unsigned int attack_id_incoming[MAX_ATTACK_IDS];
+    unsigned int attack_id_incoming_index;
     unsigned int attack_id_outgoing;
     int hitwall; // == 1 in the instant that hit the wall/platform/obstacle, else == 0
     unsigned char *colourmap;
@@ -2632,6 +2633,7 @@ typedef struct
     float x;
     float z;
     int type;
+    int ignore_projectile_wall_collision;
 } s_terrain;
 
 typedef struct
@@ -2913,6 +2915,7 @@ void kill_all();
 
 
 int projectile_wall_deflect(entity *ent);
+int check_projectile_wall_collision(entity *ent);
 
 int boomerang_catch(entity *ent, float distance_x_current);
 void boomerang_initialize(entity *ent);
@@ -2965,6 +2968,8 @@ int is_on_platform(entity *);
 entity *get_platform_on(entity *);
 void do_item_script(entity *ent, entity *item);
 void do_attack(entity *e);
+void insert_attack_id_incoming(entity *e,  unsigned int attack_id_incoming);
+int check_attack_id_incoming(entity *e,  unsigned int attack_id_incoming);
 int do_catch(entity *ent, entity *target, int animation_catch);
 int do_energy_charge(entity *ent);
 void adjust_base(entity *e, entity **pla);

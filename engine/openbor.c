@@ -8502,7 +8502,9 @@ s_model *init_model(int cacheindex, int unload)
     newchar->edgerange.z        = 0;
     newchar->boomerang_prop.acceleration     = 0;
     newchar->boomerang_prop.hdistance        = 0;
-	newchar->selectcol			= 0;
+    newchar->selectcol			= 0;
+    newchar->ignore_projectile_wall_collision = 0;
+    newchar->noexplode          = 0;
 
     // Default Attack1 in chain must be referenced if not used.
     for(i = 0; i < MAX_ATCHAIN; i++)
@@ -9000,6 +9002,9 @@ s_model *load_cached_model(char *name, char *owner, char unload, bool quickload)
             case CMD_MODEL_SUBJECT_TO_WALL:
                 newchar->subject_to_wall = (0 != GET_INT_ARG(1));
                 break;
+            case CMD_MODEL_IGNOREPROJECTILEWALLCOLLISION:
+                newchar->ignore_projectile_wall_collision = (0 != GET_INT_ARG(1));
+                break;
             case CMD_MODEL_SUBJECT_TO_HOLE:
                 newchar->subject_to_hole = (0 != GET_INT_ARG(1));
                 break;
@@ -9495,6 +9500,9 @@ s_model *load_cached_model(char *name, char *owner, char unload, bool quickload)
                 break;
             case CMD_MODEL_NODROP:
                 newchar->nodrop = GET_INT_ARG(1);
+                break;
+            case CMD_MODEL_NOEXPLODE:
+                newchar->noexplode = GET_INT_ARG(1);
                 break;
             case CMD_MODEL_THOLD:
                 // Threshold for enemies/players block
@@ -14380,7 +14388,7 @@ static void addhole(float x, float z, float x1, float x2, float x3, float x4, fl
     level->numholes++;
 }
 
-static void addwall(float x, float z, float x1, float x2, float x3, float x4, float depth, float alt, int type)
+static void addwall(float x, float z, float x1, float x2, float x3, float x4, float depth, float alt, int type, int ignore_projectile_wall_collision)
 {
     __realloc(level->walls, level->numwalls);
     level->walls[level->numwalls].x = x;
@@ -14392,6 +14400,7 @@ static void addwall(float x, float z, float x1, float x2, float x3, float x4, fl
     level->walls[level->numwalls].depth = depth;
     level->walls[level->numwalls].height = alt;
     level->walls[level->numwalls].type = type;
+    level->walls[level->numwalls].ignore_projectile_wall_collision = ignore_projectile_wall_collision;
 
     level->numwalls++;
 }
@@ -15147,7 +15156,7 @@ void load_level(char *filename)
             addhole(GET_FLOAT_ARG(1), GET_FLOAT_ARG(2), GET_FLOAT_ARG(3), GET_FLOAT_ARG(4), GET_FLOAT_ARG(5), GET_FLOAT_ARG(6), GET_FLOAT_ARG(7), GET_FLOAT_ARG(8), GET_FLOAT_ARG(9));
             break;
         case CMD_LEVEL_WALL:
-            addwall(GET_FLOAT_ARG(1), GET_FLOAT_ARG(2), GET_FLOAT_ARG(3), GET_FLOAT_ARG(4), GET_FLOAT_ARG(5), GET_FLOAT_ARG(6), GET_FLOAT_ARG(7), GET_FLOAT_ARG(8), GET_FLOAT_ARG(9));
+            addwall(GET_FLOAT_ARG(1), GET_FLOAT_ARG(2), GET_FLOAT_ARG(3), GET_FLOAT_ARG(4), GET_FLOAT_ARG(5), GET_FLOAT_ARG(6), GET_FLOAT_ARG(7), GET_FLOAT_ARG(8), GET_FLOAT_ARG(9), GET_FLOAT_ARG(10));
             break;
         case CMD_LEVEL_BASEMAP:
             addbasemap(GET_FLOAT_ARG(1), GET_FLOAT_ARG(2), GET_FLOAT_ARG(3), GET_FLOAT_ARG(4), GET_FLOAT_ARG(5), GET_FLOAT_ARG(6), GET_FLOAT_ARG(7));
@@ -15712,7 +15721,7 @@ void load_level(char *filename)
 
     if(exit_blocked)
     {
-        addwall(level->width - 30, PLAYER_MAX_Z, -panel_height, 0, 1000, 1000, panel_height, MAX_WALL_HEIGHT + 1, 0);
+        addwall(level->width - 30, PLAYER_MAX_Z, -panel_height, 0, 1000, 1000, panel_height, MAX_WALL_HEIGHT + 1, 0, 0);
     }
     if(exit_hole)
     {
@@ -19730,9 +19739,8 @@ void do_attack(entity *e)
         }
 
         // Attack IDs must be different.
-        if((target->attack_id_incoming == current_attack_id || target->attack_id_incoming2 == current_attack_id || target->attack_id_incoming3 == current_attack_id || target->attack_id_incoming4 == current_attack_id ) && !attack->ignore_attack_id)
+        if(check_attack_id_incoming(target, current_attack_id))
         {
-	    //printf("ACA SE INGORA ATAQUE POR TENER EL ID MEMORIZADO: %d - Ignore %d \n",current_attack_id,attack->ignore_attack_id);
             continue;
         }
 
@@ -19830,7 +19838,7 @@ void do_attack(entity *e)
                 self->toexplode = 2;    // Used so the bomb type entity explodes when hit
             }
             //if #052
-            if(e->toexplode == 1)
+            if(e->toexplode == 1 && !e->modeldata.noexplode)
             {
                 e->toexplode = 2;    // Used so the bomb type entity explodes when hitting
             }
@@ -20002,10 +20010,9 @@ void do_attack(entity *e)
                             self->modeldata.animation[current_follow_id]->attackone = self->animation->attackone;
                         }
                         ent_set_anim(self, current_follow_id, 0);
-			self->attack_id_incoming4 = self->attack_id_incoming3;
-			self->attack_id_incoming3 = self->attack_id_incoming2;
-			self->attack_id_incoming2 = self->attack_id_incoming;
-                        self->attack_id_incoming = current_attack_id;
+                        
+                        // memorize current attack ID to ignore future attacks with same ID 
+                        insert_attack_id_incoming(self, current_attack_id);
                     }
 
                     if(!attack->no_flash)
@@ -20128,10 +20135,8 @@ void do_attack(entity *e)
                 //followed = 1; // quit loop, animation is changed
             }//end of if #055
             
-            self->attack_id_incoming4 = self->attack_id_incoming3;
-	    self->attack_id_incoming3 = self->attack_id_incoming2;
-	    self->attack_id_incoming2 = self->attack_id_incoming;
-            self->attack_id_incoming = current_attack_id;
+            // memorize current attack ID to ignore future attacks with same ID 
+            insert_attack_id_incoming(self, current_attack_id);
             if(self == def)
             {
                 self->blocking = didblock;    // yeah, if get hit, stop blocking
@@ -20309,6 +20314,39 @@ void do_attack(entity *e)
 #undef followed
 }
 
+void insert_attack_id_incoming(entity *e,  unsigned int attack_id_incoming)
+{
+    ++e->attack_id_incoming_index;
+    if(e->attack_id_incoming_index >= MAX_ATTACK_IDS)
+    {
+        e->attack_id_incoming_index = 0;
+    }
+    e->attack_id_incoming[e->attack_id_incoming_index] = attack_id_incoming;
+}
+
+int check_attack_id_incoming(entity *e,  unsigned int attack_id_incoming)
+{
+    int index = e->attack_id_incoming_index;
+
+    for (int i = 0 ; i < MAX_ATTACK_IDS; ++i)
+    {
+        if(e->attack_id_incoming[index] == attack_id_incoming)
+        {
+            return 1;
+        }
+        else if(e->attack_id_incoming[index] == 0)
+        {
+            break;
+        }
+        --index;
+        if(index < 0)
+        {
+            index = MAX_ATTACK_IDS - 1;
+        }
+    }
+
+    return 0;
+}
 
 // it can be useful for next changes
 /*static int is_obstacle_around(entity* ent, float threshold)
@@ -20850,6 +20888,13 @@ void adjust_base(entity *e, entity **pla)
     else
     {
         *pla = other = self->landed_on_platform = NULL;
+    }
+
+    // Avoid base adjustement in projectiles when the platform detected is marked to be ignored
+    if((self->spawntype == SPAWN_TYPE_PROJECTILE_NORMAL || self->spawntype == SPAWN_TYPE_PROJECTILE_BOMB) &&
+    other && (other->modeldata.ignore_projectile_wall_collision || other->modeldata.type == TYPE_OBSTACLE))
+    {
+        return;
     }
 
     if(other && !(other->update_mark & 8))
@@ -27672,7 +27717,10 @@ int arrow_move()
     if(level)
     {
         // Bounce off walls or platforms.
-        projectile_wall_deflect(self);
+        // projectile_wall_deflect(self);
+
+        // Destroy projectile when colliding with a wall
+        check_projectile_wall_collision(self);
     }
 
     if(self->projectile_prime & PROJECTILE_PRIME_BASE_FLOOR)
@@ -27747,6 +27795,12 @@ entity *check_block_obstacle(entity *ent)
         // height of the entity's top edge.
         height += ent->position.y;
 
+        // Clamp height
+        if(height < 0)
+        {
+            height = 0;
+        }
+
         // Find obstacle at entitiy's position (if any).
         obstacle = check_platform_between(ent->position.x, ent->position.z, ent->position.y, height, ent);
     }
@@ -27814,6 +27868,155 @@ int projectile_wall_deflect(entity *ent)
     #undef RICHOCHET_VELOCITY_X_FACTOR
     #undef RICHOCHET_VELOCITY_Y
     #undef RICHOCHET_VELOCITY_Y_RAND
+}
+
+// Returns 1 on wall collision. 0 otherwise.
+int check_projectile_wall_collision(entity *ent)
+{
+    int blocking_wall;
+    entity *blocking_obstacle = NULL;
+    s_collision_attack *attack = NULL;
+    int pos_x = 0;
+    int pos_y = 0;
+    int pos_z = 0;
+    int flash_pos_x = 0;
+    int flash_pos_y = 0;
+    int flash_pos_z = 0;
+    bool use_attack_anim = true;
+
+    // skip if the projectile is forced to ignore wall collisions
+    if(ent->modeldata.ignore_projectile_wall_collision || ent->hitwall)
+    {
+       return 0; 
+    }
+
+    // skip if there is no attack collider enabled
+    if(ent->animation &&
+        ent->animation->collision_attack &&
+        ent->animation->collision_attack[ent->animpos] &&
+        ent->animation->collision_attack[ent->animpos]->instance)
+    {
+        attack = ent->animation->collision_attack[ent->animpos]->instance[0];
+    }
+    else
+    {
+        return 0;
+    }
+
+    blocking_wall = check_block_wall(self);
+
+    // Some walls should be ignored
+    if(blocking_wall >= 0 && level->walls[blocking_wall].ignore_projectile_wall_collision)
+    {
+        blocking_wall = -1;
+    }
+
+    if(blocking_wall < 0)
+    {
+        blocking_obstacle = check_block_obstacle(self);
+
+        // Some obstacles should be ignored
+        if(blocking_obstacle &&
+        (blocking_obstacle->modeldata.ignore_projectile_wall_collision || blocking_obstacle->modeldata.type == TYPE_OBSTACLE))
+        {
+            blocking_obstacle = NULL;
+        }
+    }
+
+    if(blocking_wall >= 0 || blocking_obstacle)
+    {
+        // disable next wall collision checks for this entity
+        ent->hitwall = 1;
+
+        // The following code is copying the projectile behavior when its attack hits a target
+
+        if(ent->pausetime < _time || (inair(ent) && !equalairpause))        // if equalairpause is set, inair(e) is nolonger a condition for extra pausetime
+        {
+            // Adds pause to the current animation
+            ent->toss_time += attack->pause_add;      // So jump height pauses in midair
+            ent->nextmove += attack->pause_add;      // xdir, zdir
+            ent->nextanim += attack->pause_add;       //Pause animation for a bit
+            ent->nextthink += attack->pause_add;      // So anything that auto moves will pause
+            ent->pausetime = _time + attack->pause_add ; //UT: temporary solution
+        }
+
+        pos_x = ent->position.x;
+        pos_z = ent->position.z;
+        pos_y = pos_z - ent->position.y;
+
+        // farthest attack collider margin
+        if(ent->direction == DIRECTION_LEFT)
+        {
+            flash_pos_x = pos_x - attack->coords->width;
+        }
+        else
+        {
+            flash_pos_x = pos_x + attack->coords->width;
+        }
+        flash_pos_z = pos_z + 1; // changed so flashes always spawn in front
+        flash_pos_y = ((pos_y + attack->coords->y) + (pos_y + attack->coords->height)) * 0.5; // middle attack collider height
+        flash_pos_y = flash_pos_z - flash_pos_y - 17; // sprite offset adjustment
+
+        entity *flash = spawn(flash_pos_x, flash_pos_z, flash_pos_y, 0, NULL, 2, NULL);
+        if(flash)
+        {
+            flash->spawntype = SPAWN_TYPE_FLASH;
+            execute_onspawn_script(flash);
+            if(flash->modeldata.toflip)
+            {
+                flash->direction = (ent->direction == DIRECTION_LEFT);    // Now the flash will flip depending on which side the attacker is on
+            }
+            flash->base = flash_pos_y;
+            flash->autokill = 2;
+        }
+
+        // projectiles with a followup animation
+        if(ent->animation->followup.animation)
+        {
+            int current_follow_id = animfollows[ent->animation->followup.animation - 1];
+            if(validanim(ent, current_follow_id))
+            {
+                if(!ent->modeldata.animation[current_follow_id]->attackone)
+                {
+                    ent->modeldata.animation[current_follow_id]->attackone = ent->animation->attackone;
+                }
+                ent_set_anim(ent, current_follow_id, 1);          // Then go to it!
+                use_attack_anim = false; // if there is a folloup anim we don't need to use the attack anim
+            }
+        }
+        // bombs
+        if(ent->toexplode == 1)
+        {
+            ent->toexplode = 2;    // Used so the bomb type entity explodes when hitting
+            use_attack_anim = false; // attack anim will be set during bomb_move
+        }
+
+        if(use_attack_anim)
+        {
+            if(validanim(ent, ANI_ATTACK2))
+            {
+                ent_set_anim(ent, ANI_ATTACK2, 0);
+            }
+            else if (validanim(ent, ANI_ATTACK1))
+            {
+                ent_set_anim(ent, ANI_ATTACK1, 0);
+            }
+        }
+
+        // play a block sound
+        sound_play_sample(SAMPLE_BLOCK, 0, savedata.effectvol, savedata.effectvol, 100);
+        
+        // if the projectile is configured to be removed on attack, kill it immediately
+        if(ent->remove_on_attack)
+        {
+            kill_entity(ent);
+        }
+        
+        return 1;
+    }
+    
+    // Did not collide, so return false.
+    return 0;
 }
 
 // Caskey, Damon V.
@@ -28265,6 +28468,13 @@ int bomb_move()
             ent_set_anim(self, ANI_ATTACK1, 0);
         }
     }
+
+    if(level)
+    {
+        // Destroy projectile when colliding with a wall
+        check_projectile_wall_collision(self);
+    }
+
     return 1;
 }
 

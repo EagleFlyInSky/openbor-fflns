@@ -2086,6 +2086,7 @@ enum entityproperty_enum
     _ep_hostile,
     _ep_icon,
     _ep_iconposition,
+    _ep_ignore_projectile_wall_collision,
     _ep_invincible,
     _ep_invinctime,
     _ep_jugglepoints,
@@ -2286,6 +2287,7 @@ static const char *eplist[] =
     "hostile",
     "icon",
     "iconposition",
+    "ignore_projectile_wall_collision",
     "invincible",
     "invinctime",
     "jugglepoints",
@@ -4370,6 +4372,12 @@ HRESULT openbor_getentityproperty(ScriptVariant **varlist , ScriptVariant **pret
         }
         break;
     }
+    case _ep_ignore_projectile_wall_collision:
+    {
+        ScriptVariant_ChangeType(*pretvar, VT_INTEGER);
+        (*pretvar)->lVal = (LONG)ent->modeldata.ignore_projectile_wall_collision;
+        break;
+    }
     case _ep_invincible:
     {
         ScriptVariant_ChangeType(*pretvar, VT_INTEGER);
@@ -6274,7 +6282,7 @@ HRESULT openbor_changeentityproperty(ScriptVariant **varlist , ScriptVariant **p
     {
         if(SUCCEEDED(ScriptVariant_IntegerValue(varlist[2], &ltemp)))
         {
-            ent->attack_id_incoming = (LONG)ltemp;
+            insert_attack_id_incoming(ent, (LONG)ltemp);
         }
         break;
     }
@@ -6347,6 +6355,14 @@ HRESULT openbor_changeentityproperty(ScriptVariant **varlist , ScriptVariant **p
         if(paramCount > 3 && SUCCEEDED(ScriptVariant_IntegerValue(varlist[3], &ltemp)))
         {
             ent->modeldata.icon.position.y = (LONG)ltemp;
+        }
+        break;
+    }
+    case _ep_ignore_projectile_wall_collision:
+    {
+        if(SUCCEEDED(ScriptVariant_IntegerValue(varlist[2], &ltemp)))
+        {
+            ent->modeldata.ignore_projectile_wall_collision = (LONG)ltemp;
         }
         break;
     }

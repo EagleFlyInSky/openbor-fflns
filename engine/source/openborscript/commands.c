@@ -306,6 +306,7 @@ List *createModelCommandList(void)
     LIST_ADD(CMD_MODEL_ICONW, "iconw");
     LIST_ADD(CMD_MODEL_IDLE, "idle");
     LIST_ADD(CMD_MODEL_IGNOREATTACKID, "ignoreattackid");
+    LIST_ADD(CMD_MODEL_IGNOREPROJECTILEWALLCOLLISION, "ignore_projectile_wall_collision");
     LIST_ADD(CMD_MODEL_INHOLESCRIPT, "inholescript");
     LIST_ADD(CMD_MODEL_INSTANTITEMDEATH, "instantitemdeath");
     LIST_ADD(CMD_MODEL_ITEMBOX, "itembox");
@@ -344,6 +345,7 @@ List *createModelCommandList(void)
     LIST_ADD(CMD_MODEL_NODIEBLINK, "nodieblink");
     LIST_ADD(CMD_MODEL_NODRAWMETHOD, "nodrawmethod");
     LIST_ADD(CMD_MODEL_NODROP, "nodrop");
+    LIST_ADD(CMD_MODEL_NOEXPLODE, "noexplode");
     LIST_ADD(CMD_MODEL_NOGRAB, "nograb");
     LIST_ADD(CMD_MODEL_NOKILL, "nokill");
     LIST_ADD(CMD_MODEL_NOLIFE, "nolife");
