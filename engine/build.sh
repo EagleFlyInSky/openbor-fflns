@@ -211,7 +211,7 @@ function windows {
   export PATH=$OLD_PATH
   . ./environ.sh 5
   if test $WINDEV; then
-    if [ "$BUILD_DEBUG" != "1" ]; then
+    if [ "$SKIP_CLEAN" != "1" ]; then
       make clean BUILD_WIN=1
     fi
     #first remove old resource file and update with build number from build_number.h.

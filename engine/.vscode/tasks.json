@@ -28,6 +28,25 @@
             "options": {
                 "env": {
                     "PATH": "../tools/bin;${env:PATH}",
+                    "BUILD_DEBUG": "1",
+                    "SKIP_CLEAN": "1"
+                }
+            },
+            "dependsOn": [
+                "WIN SDK"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build"
+            }
+        },
+        {
+            "label": "WIN DEBUG CLEAN",
+            "type": "shell",
+            "command": "bash.exe build.sh 5",
+            "options": {
+                "env": {
+                    "PATH": "../tools/bin;${env:PATH}",
                     "BUILD_DEBUG": "1"
                 }
             },
