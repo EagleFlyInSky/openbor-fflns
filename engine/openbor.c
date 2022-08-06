@@ -18420,7 +18420,7 @@ entity *spawn(float x, float z, float a, int direction, char *name, int index, s
                   count_frames += anim->numframes;
                 }
               }
-              if(count_frames > 10 && model->type != TYPE_TEXTBOX)
+              if(count_frames > 10 && model->type != TYPE_PLAYER && model->type != TYPE_TEXTBOX)
               {
                 update_model_loadflag(model, 0);
                 printf("Locked in memory model %s with %d frames\n", model->name, count_frames);
