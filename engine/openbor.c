@@ -2348,7 +2348,7 @@ void clearbuttons(int player)
         savedata.keys[1][SDID_JUMP]      = CONTROL_DEFAULT2_FIRE5;
         savedata.keys[1][SDID_SPECIAL]   = CONTROL_DEFAULT2_FIRE6;
         savedata.keys[1][SDID_START]     = CONTROL_DEFAULT2_START;
-        savedata.keys[1][SDID_SCREENSHOT] = CONTROL_DEFAULT2_SCREENSHOT;
+        savedata.keys[1][SDID_SCREENSHOT] = CONTROL_DEFAULT1_SCREENSHOT;
         #ifdef SDL
             //savedata.keys[1][SDID_ESC]       = CONTROL_DEFAULT2_ESC;
         #endif
@@ -2366,7 +2366,7 @@ void clearbuttons(int player)
         savedata.keys[2][SDID_JUMP]      = CONTROL_DEFAULT3_FIRE5;
         savedata.keys[2][SDID_SPECIAL]   = CONTROL_DEFAULT3_FIRE6;
         savedata.keys[2][SDID_START]     = CONTROL_DEFAULT3_START;
-        savedata.keys[2][SDID_SCREENSHOT] = CONTROL_DEFAULT3_SCREENSHOT;
+        savedata.keys[2][SDID_SCREENSHOT] = CONTROL_DEFAULT1_SCREENSHOT;
         #ifdef SDL
             //savedata.keys[2][SDID_ESC]       = CONTROL_DEFAULT3_ESC;
         #endif
@@ -2384,7 +2384,7 @@ void clearbuttons(int player)
         savedata.keys[3][SDID_JUMP]      = CONTROL_DEFAULT4_FIRE5;
         savedata.keys[3][SDID_SPECIAL]   = CONTROL_DEFAULT4_FIRE6;
         savedata.keys[3][SDID_START]     = CONTROL_DEFAULT4_START;
-        savedata.keys[3][SDID_SCREENSHOT] = CONTROL_DEFAULT4_SCREENSHOT;
+        savedata.keys[3][SDID_SCREENSHOT] = CONTROL_DEFAULT1_SCREENSHOT;
         #ifdef SDL
             //savedata.keys[3][SDID_ESC]       = CONTROL_DEFAULT4_ESC;
         #endif
