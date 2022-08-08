@@ -37889,6 +37889,7 @@ void menu_options_input()
             {
             case 0:
                 control_usejoy((savedata.usejoy ^= 1));
+                control_init(savedata.usejoy);
                 break;
             case 1:
                 keyboard_setup(0);
