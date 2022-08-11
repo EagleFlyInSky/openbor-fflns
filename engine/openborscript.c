@@ -2120,6 +2120,7 @@ enum entityproperty_enum
     _ep_name,
     _ep_nameposition,
     _ep_nextanim,
+    _ep_next_force_direction,
     _ep_nextmove,
     _ep_nextthink,
     _ep_no_adjust_base,
@@ -2135,6 +2136,7 @@ enum entityproperty_enum
     _ep_offscreen_noatk_factor,
     _ep_offscreenkill,
     _ep_opponent,
+    _ep_override_next_force_direction,
     _ep_owner,
     _ep_pain_time,
     _ep_parent,
@@ -2321,6 +2323,7 @@ static const char *eplist[] =
     "name",
     "nameposition",
     "nextanim",
+    "nextforcedirection",
     "nextmove",
     "nextthink",
     "no_adjust_base",
@@ -2336,6 +2339,7 @@ static const char *eplist[] =
     "offscreennoatkfactor",
     "offscreenkill",
     "opponent",
+    "overridenextforcedirection",
     "owner",
     "pain_time",
     "parent",
@@ -4767,6 +4771,12 @@ HRESULT openbor_getentityproperty(ScriptVariant **varlist , ScriptVariant **pret
         (*pretvar)->lVal = (LONG)ent->nextanim;
         break;
     }
+    case _ep_next_force_direction:
+    {
+        ScriptVariant_ChangeType(*pretvar, VT_INTEGER);
+        (*pretvar)->lVal = (LONG)ent->next_force_direction;
+        break;
+    }
     case _ep_nextmove:
     {
         ScriptVariant_ChangeType(*pretvar, VT_INTEGER);
@@ -4870,6 +4880,12 @@ HRESULT openbor_getentityproperty(ScriptVariant **varlist , ScriptVariant **pret
             ScriptVariant_ChangeType(*pretvar, VT_PTR);
             (*pretvar)->ptrVal = (VOID *)ent->custom_target;
         }
+        break;
+    }
+    case _ep_override_next_force_direction:
+    {
+        ScriptVariant_ChangeType(*pretvar, VT_INTEGER);
+        (*pretvar)->lVal = (LONG)ent->override_next_force_direction;
         break;
     }
     case _ep_owner:
@@ -6661,6 +6677,21 @@ HRESULT openbor_changeentityproperty(ScriptVariant **varlist , ScriptVariant **p
         }
         break;
     }
+    case _ep_next_force_direction:
+    {
+        // if a 4th param exists it is used to set the override_next_force_direction value
+        // otherwise override_next_force_direction is set to 1 to override just once
+        if(SUCCEEDED(ScriptVariant_IntegerValue(varlist[2], &ltemp)))
+        {
+            ent->next_force_direction = (LONG)ltemp;
+            ent->override_next_force_direction = 1;
+        }
+        if(paramCount > 3 && SUCCEEDED(ScriptVariant_IntegerValue(varlist[3], &ltemp)))
+        {
+            ent->override_next_force_direction = (LONG)ltemp;
+        }
+        break;
+    }
     case _ep_nextmove:
     {
         if(SUCCEEDED(ScriptVariant_IntegerValue(varlist[2], &ltemp)))
@@ -6776,6 +6807,14 @@ HRESULT openbor_changeentityproperty(ScriptVariant **varlist , ScriptVariant **p
     case _ep_custom_target:
     {
         ent->custom_target = (entity *)varlist[2]->ptrVal;
+        break;
+    }
+    case _ep_override_next_force_direction:
+    {
+        if(SUCCEEDED(ScriptVariant_IntegerValue(varlist[2], &ltemp)))
+        {
+            ent->override_next_force_direction = (LONG)ltemp;
+        }
         break;
     }
     case _ep_owner:

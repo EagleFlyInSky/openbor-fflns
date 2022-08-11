@@ -24303,7 +24303,28 @@ void checkdeath()
 
 void checkdamageflip(entity *other, s_collision_attack *attack)
 {
+    e_direction_adjust force_direction = DIRECTION_ADJUST_NONE;
     self->normaldamageflipdir = -1;
+
+    if(other && attack)
+    {
+        force_direction =  attack->force_direction;
+
+        // if override is set use next value instead of the attack value
+        if(other->override_next_force_direction > 0)
+        {
+            force_direction = other->next_force_direction;
+
+            // disable override if it was set to only override once
+            if(other->override_next_force_direction == 1)
+            {
+                other->override_next_force_direction = 0;
+            }
+        }
+
+        // save used force_direction for next time
+        other->next_force_direction = force_direction;
+    }
 
     if(other == NULL || other == self || (!self->drop && (attack->no_pain || self->modeldata.nopain || (self->defense[attack->attack_type].pain && attack->attack_force < self->defense[attack->attack_type].pain))))
     {
@@ -24312,7 +24333,7 @@ void checkdamageflip(entity *other, s_collision_attack *attack)
 
     if(!self->frozen && !self->modeldata.noflip)// && !inair(self))
     {
-        switch(attack->force_direction)
+        switch(force_direction)
         {
             case DIRECTION_ADJUST_NONE:
                 if( !self->inbackpain )

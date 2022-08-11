@@ -2444,6 +2444,8 @@ typedef struct entity
     int escapecount; // For escapehits
     s_rush rush;    //Rush combo display.
     int lifespancountdown; // life span count down
+    int override_next_force_direction; // 0 = disabled, 1 = override once, 2 = override always
+    int next_force_direction; // force_direction value to be used when override_next_force_direction is set
 
     //------------- copy them from model to avoid global effect -------------
     s_defense *defense;
