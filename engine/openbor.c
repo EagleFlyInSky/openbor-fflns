@@ -27897,12 +27897,11 @@ int check_projectile_wall_collision(entity *ent)
     int blocking_wall;
     entity *blocking_obstacle = NULL;
     s_collision_attack *attack = NULL;
-    int pos_x = 0;
-    int pos_y = 0;
-    int pos_z = 0;
-    int flash_pos_x = 0;
-    int flash_pos_y = 0;
-    int flash_pos_z = 0;
+    int attack_min_y = 0;
+    int attack_max_y = 0;
+    int hit_pos_x = 0;
+    int hit_pos_y = 0;
+    int hit_pos_z = 0;
     bool use_attack_anim = true;
 
     // skip if the projectile is forced to ignore wall collisions
@@ -27924,24 +27923,46 @@ int check_projectile_wall_collision(entity *ent)
         return 0;
     }
 
-    blocking_wall = check_block_wall(self);
+    // Calculate attack collider min and max height positions
+    attack_min_y = ent->position.y - attack->coords->height;
+    attack_max_y = ent->position.y - attack->coords->y;
 
-    // Some walls should be ignored
-    if(blocking_wall >= 0 && level->walls[blocking_wall].ignore_projectile_wall_collision)
+    blocking_wall = check_block_wall(self);
+    if(blocking_wall >= 0)
     {
-        blocking_wall = -1;
+        // Check wall height
+        if(attack_min_y > level->walls[blocking_wall].height)
+        {
+            blocking_wall = -1;
+        }
+
+         // Some walls should be ignored
+        if(blocking_wall >= 0 && level->walls[blocking_wall].ignore_projectile_wall_collision)
+        {
+            blocking_wall = -1;
+        }
     }
 
     if(blocking_wall < 0)
     {
         blocking_obstacle = check_block_obstacle(self);
 
-        // Some obstacles should be ignored
-        if(blocking_obstacle &&
-        (blocking_obstacle->modeldata.ignore_projectile_wall_collision || blocking_obstacle->modeldata.type == TYPE_OBSTACLE))
+        if(blocking_obstacle)
         {
-            blocking_obstacle = NULL;
-        }
+            // Check obstacle height
+            if(attack_max_y < blocking_obstacle->position.y ||
+            attack_min_y > blocking_obstacle->position.y + blocking_obstacle->animation->platform[blocking_obstacle->animpos][PLATFORM_HEIGHT])
+            {
+                blocking_obstacle = NULL;
+            }
+
+            // Some obstacles should be ignored
+            if(blocking_obstacle &&
+            (blocking_obstacle->modeldata.ignore_projectile_wall_collision || blocking_obstacle->modeldata.type == TYPE_OBSTACLE))
+            {
+                blocking_obstacle = NULL;
+            }
+        }        
     }
 
     if(blocking_wall >= 0 || blocking_obstacle)
@@ -27961,24 +27982,20 @@ int check_projectile_wall_collision(entity *ent)
             ent->pausetime = _time + attack->pause_add ; //UT: temporary solution
         }
 
-        pos_x = ent->position.x;
-        pos_z = ent->position.z;
-        pos_y = pos_z - ent->position.y;
-
         // farthest attack collider margin
         if(ent->direction == DIRECTION_LEFT)
         {
-            flash_pos_x = pos_x - attack->coords->width;
+            hit_pos_x = ent->position.x - attack->coords->width;
         }
         else
         {
-            flash_pos_x = pos_x + attack->coords->width;
+            hit_pos_x = ent->position.x + attack->coords->width;
         }
-        flash_pos_z = pos_z + 1; // changed so flashes always spawn in front
-        flash_pos_y = ((pos_y + attack->coords->y) + (pos_y + attack->coords->height)) * 0.5; // middle attack collider height
-        flash_pos_y = flash_pos_z - flash_pos_y - 17; // sprite offset adjustment
+        hit_pos_y = (attack_min_y + attack_max_y) * 0.5; // middle attack collider height
+        hit_pos_y = hit_pos_y - 17; // sprite offset adjustment
+        hit_pos_z =  ent->position.z + 1; // changed so flashes always spawn in front
 
-        entity *flash = spawn(flash_pos_x, flash_pos_z, flash_pos_y, 0, NULL, 2, NULL);
+        entity *flash = spawn(hit_pos_x, hit_pos_z, hit_pos_y, 0, NULL, 2, NULL);
         if(flash)
         {
             flash->spawntype = SPAWN_TYPE_FLASH;
@@ -27987,7 +28004,7 @@ int check_projectile_wall_collision(entity *ent)
             {
                 flash->direction = (ent->direction == DIRECTION_LEFT);    // Now the flash will flip depending on which side the attacker is on
             }
-            flash->base = flash_pos_y;
+            flash->base = hit_pos_y;
             flash->autokill = 2;
         }
 
