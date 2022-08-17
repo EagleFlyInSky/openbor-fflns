@@ -8567,6 +8567,7 @@ s_model *init_model(int cacheindex, int unload)
     // default string value, only by reference
     newchar->rider = get_cached_model_index("K'");
     newchar->flash = newchar->bflash = get_cached_model_index("flash");
+    newchar->flashoverridesource = newchar->flashoverridetarget = -1;
 
     //Default offense/defense values.
     for(i = 0; i < max_attack_types; i++)
@@ -9160,6 +9161,12 @@ s_model *load_cached_model(char *name, char *owner, char unload, bool quickload)
                 {
                     newchar->flash = get_cached_model_index(value);
                 }
+                break;
+            case CMD_MODEL_FLASHOVERRIDE:
+                value = GET_ARG(1);
+                newchar->flashoverridesource = get_cached_model_index(value);
+                value = GET_ARG(2);
+                newchar->flashoverridetarget = get_cached_model_index(value);
                 break;
             case CMD_MODEL_BFLASH:	// Flash that is spawned if an attack is blocked
                 value = GET_ARG(1);
@@ -20051,7 +20058,11 @@ void do_attack(entity *e)
                 // Spawn a flash
                 if(!attack->no_flash)
                 {
-                    if(!self->modeldata.noatflash)
+                    if(self->modeldata.flashoverridesource > 0 && self->modeldata.flashoverridesource == attack->hitflash)
+                    {
+                        flash = spawn(lasthit.position.x, lasthit.position.z, lasthit.position.y, 0, NULL, self->modeldata.flashoverridetarget, NULL);
+                    }
+                    else if(!self->modeldata.noatflash)
                     {
                         if(attack->hitflash >= 0)
                         {

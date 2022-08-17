@@ -263,6 +263,7 @@ List *createModelCommandList(void)
     LIST_ADD(CMD_MODEL_FASTATTACK, "fastattack");
     LIST_ADD(CMD_MODEL_FIREB, "fireb");
     LIST_ADD(CMD_MODEL_FLASH, "flash");
+    LIST_ADD(CMD_MODEL_FLASHOVERRIDE, "flashoverride");
     LIST_ADD(CMD_MODEL_FLIPFRAME, "flipframe");
     LIST_ADD(CMD_MODEL_FMAP, "fmap");
     LIST_ADD(CMD_MODEL_FOLLOWANIM, "followanim");

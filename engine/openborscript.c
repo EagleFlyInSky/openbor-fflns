@@ -2761,6 +2761,8 @@ enum gep_flash_enum
     _ep_flash_block,
     _ep_flash_def,
     _ep_flash_noattack,
+    _ep_flash_overridesource,
+    _ep_flash_overridetarget,
     _ep_flash_the_end,
 };
 
@@ -2976,6 +2978,8 @@ int mapstrings_entityproperty(ScriptVariant **varlist, int paramCount)
         "block",
         "default",
         "noattack",
+        "overridesource",
+        "overridetarget",
     };
 
     static const char *proplist_icon[] =
@@ -4145,23 +4149,53 @@ HRESULT openbor_getentityproperty(ScriptVariant **varlist , ScriptVariant **pret
             return E_FAIL;
         }
         ltemp = arg->lVal;
-        ScriptVariant_ChangeType(*pretvar, VT_INTEGER);
 
         switch(ltemp)
         {
         case _ep_flash_block:
         {
-            i = ent->modeldata.bflash;
+            ScriptVariant_ChangeType(*pretvar, VT_INTEGER);
+            (*pretvar)->lVal = (LONG)ent->modeldata.bflash;
             break;
         }
         case _ep_flash_def:
         {
-            i = ent->modeldata.flash;
+            ScriptVariant_ChangeType(*pretvar, VT_INTEGER);
+            (*pretvar)->lVal = (LONG)ent->modeldata.flash;
             break;
         }
         case _ep_flash_noattack:
         {
-            i = ent->modeldata.noatflash;
+            ScriptVariant_ChangeType(*pretvar, VT_INTEGER);
+            (*pretvar)->lVal = (LONG)ent->modeldata.noatflash;
+            break;
+        }
+        case _ep_flash_overridesource:
+        {
+            ScriptVariant_ChangeType(*pretvar, VT_STR);
+            int model_index = ent->modeldata.flashoverridesource;
+            if(model_index >= 0 && model_index < models_cached)
+            {
+                (*pretvar)->strVal = StrCache_CreateNewFrom(model_cache[model_index].name);
+            }
+            else
+            {
+                (*pretvar)->strVal = StrCache_CreateNewFrom("");
+            }
+            break;
+        }
+        case _ep_flash_overridetarget:
+        {
+            ScriptVariant_ChangeType(*pretvar, VT_STR);
+            int model_index = ent->modeldata.flashoverridetarget;
+            if(model_index >= 0 && model_index < models_cached)
+            {
+                (*pretvar)->strVal = StrCache_CreateNewFrom(model_cache[model_index].name);
+            }
+            else
+            {
+                (*pretvar)->strVal = StrCache_CreateNewFrom("");
+            }
             break;
         }
         default:
@@ -4170,8 +4204,6 @@ HRESULT openbor_getentityproperty(ScriptVariant **varlist , ScriptVariant **pret
             return E_FAIL;
         }
         }
-        ScriptVariant_ChangeType(*pretvar, VT_INTEGER);
-        (*pretvar)->lVal = (LONG)i;
         break;
     }
     case _ep_pain_time:

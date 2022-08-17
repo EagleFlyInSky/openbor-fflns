@@ -2117,6 +2117,8 @@ typedef struct
     int boomerang;
     s_boomerang_props boomerang_prop;
     int flash; // Now each entity can have their own flash
+    int flashoverridesource; // Flash to override when receiving an attack
+    int flashoverridetarget; // New flash to use when overriding
     int bflash; // Flash that plays when an attack is blocked
     s_dust dust; //Spawn entity during certain actions.
     s_axis_plane_vertical_int size; // Used to set height of player in pixels
