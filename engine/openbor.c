@@ -25649,7 +25649,20 @@ int adjust_grabposition(entity *ent, entity *other, float dist, int grabin)
 
     if(0 >= testmove(ent, ent->position.x, ent->position.z, x1, z1) || 0 >= testmove(other, other->position.x, other->position.z, x2, z2))
     {
-        return 0;
+        // If it is not possible to move both entities we try to move only one of them
+        x1 = other->position.x + ((other->position.x > ent->position.x) ? -dist : dist);
+        x2 = other->position.x;
+        z1 = z2 = other->position.z;
+        if(0 >= testmove(ent, ent->position.x, ent->position.z, x1, z1))
+        {
+            x1 = ent->position.x;
+            x2 = ent->position.x + ((other->position.x > ent->position.x) ? dist : -dist);
+            z1 = z2 = ent->position.z;
+            if(0 >= testmove(other, other->position.x, other->position.z, x2, z2))
+            {
+                return 0;
+            }
+        }
     }
 
     ent->position.x = x1;
