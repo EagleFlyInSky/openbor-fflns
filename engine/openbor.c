@@ -20058,7 +20058,7 @@ void do_attack(entity *e)
                 // Spawn a flash
                 if(!attack->no_flash)
                 {
-                    if(self->modeldata.flashoverridesource > 0 && self->modeldata.flashoverridesource == attack->hitflash)
+                    if(self->modeldata.flashoverridesource >= 0 && self->modeldata.flashoverridesource == attack->hitflash)
                     {
                         flash = spawn(lasthit.position.x, lasthit.position.z, lasthit.position.y, 0, NULL, self->modeldata.flashoverridetarget, NULL);
                     }
