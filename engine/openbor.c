@@ -25621,6 +25621,7 @@ void npc_warp()
 int adjust_grabposition(entity *ent, entity *other, float dist, int grabin)
 {
     float x1, z1, x2, z2, x;
+    int ent_testmove, other_testmove;
 
     //if(ent->position.y != other->position.y)
     if(diff(ent->position.y,other->position.y) > T_WALKOFF)
@@ -25647,18 +25648,30 @@ int adjust_grabposition(entity *ent, entity *other, float dist, int grabin)
         z1 = z2 = (ent->position.z + other->position.z) / 2;
     }
 
-    if(0 >= testmove(ent, ent->position.x, ent->position.z, x1, z1) || 0 >= testmove(other, other->position.x, other->position.z, x2, z2))
+    other_testmove = testmove(other, other->position.x, other->position.z, x2, z2);
+    // If it is not possible to move the opponent we try to move only the attacker
+    if(other_testmove <= 0)
     {
-        // If it is not possible to move both entities we try to move only one of them
-        x1 = other->position.x + ((other->position.x > ent->position.x) ? -dist : dist);
+        x1 = other->position.x + ((ent->position.x >= other->position.x) ? dist : -dist);
         x2 = other->position.x;
         z1 = z2 = other->position.z;
-        if(0 >= testmove(ent, ent->position.x, ent->position.z, x1, z1))
+        ent_testmove = testmove(ent, ent->position.x, ent->position.z, x1, z1);
+        if(ent_testmove <= 0)
+        {
+            return 0;
+        }
+    }
+    else
+    {
+        ent_testmove = testmove(ent, ent->position.x, ent->position.z, x1, z1);
+        // If it is not possible to move the attacker we try to move only the opponent
+        if(ent_testmove <= 0)
         {
             x1 = ent->position.x;
             x2 = ent->position.x + ((other->position.x > ent->position.x) ? dist : -dist);
             z1 = z2 = ent->position.z;
-            if(0 >= testmove(other, other->position.x, other->position.z, x2, z2))
+            other_testmove = testmove(other, other->position.x, other->position.z, x2, z2);
+            if(other_testmove <= 0)
             {
                 return 0;
             }
