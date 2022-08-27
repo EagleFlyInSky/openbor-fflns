@@ -90,6 +90,7 @@
 #define     MAX_DOTS            10                  // Max active dot effects.
 #define     MAX_ARG_COUNT       128             //MIO cambio del valor original 64, para aumentar el tamaño máximo de personajes
 #define     MAX_ATTACK_IDS      100             // Max amount of memorized attack ids
+#define     MAX_SEL_PLAYERS     200             // Max amount of selectable players. Used during random select.
 
 /*
 Note: the min Z coordinate of the player is important

@@ -5013,6 +5013,80 @@ s_model *prevplayermodelcoln(s_model *current, int p)
     return model;
 }
 
+s_model *selectrandomplayer(s_model *current)
+{
+    
+    unsigned short players[MAX_SEL_PLAYERS];
+    unsigned short player_count = 0;
+    s_set_entry *set = levelsets + current_set;
+    s_model *model = current;
+    int selected_index = 0;
+
+    for(int i = 0; i < models_cached; i++)
+    {
+        if(model_cache[i].selectable &&
+            model_cache[i].clearcount <= bonus)
+        {
+            bool allowed = true;
+            // If no same is allowed we exclude all player selections
+            if(set->nosame & 1)
+            {
+                for(int player_index = 0; player_index < MAX_PLAYERS; ++player_index)
+                {
+                    if(stricmp(model_cache[i].name, player[player_index].name) == 0)
+                    {
+                        allowed = false;
+                        break;
+                    }
+                }
+            }
+            // Otherwise we only exclude current player selection
+            else if(model_cache[i].model == current)
+            {
+                allowed = false;
+            }
+            
+            if(allowed)
+            {
+                players[player_count] = i;
+                ++player_count;
+                if(player_count >= MAX_SEL_PLAYERS)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    if(player_count > 0)
+    {
+        selected_index = players[rand32() % player_count];
+
+        // quickload
+        if (!model_cache[selected_index].model)
+        {
+            load_cached_model(model_cache[selected_index].name, "select_screen", 3, true);
+        }
+
+        if(model_cache[selected_index].model)
+        {
+            model = model_cache[selected_index].model;
+        }
+    }
+
+    return model;
+}
+
+int selectrandomcolourmap(s_model *current, int p)
+{
+    int random_colourmap = rand32() % current->maps_loaded;
+
+    // use the nextcolourmap function to avoid same colourmaps if not allowed
+    random_colourmap = nextcolourmapn(current, random_colourmap, p);
+
+    return random_colourmap;
+}
+
 // Reset All Player Models to on/off for Select Screen.
 static void reset_playable_list(char which)
 {
@@ -16060,7 +16134,6 @@ void updatestatus()
     s_model *model = NULL;
     s_set_entry *set = levelsets + current_set;
     char* name = NULL;
-    int prev_color = -1;
 
     for(i = 0; i < set->maxplayers; i++)
     {
@@ -16106,7 +16179,7 @@ void updatestatus()
                 player[i].playkeys = 0;
             }
             // don't like a characters color try a new one!
-            else if(player[i].playkeys & (FLAG_MOVEUP | FLAG_MOVEDOWN) && colourselect)
+            else if(player[i].playkeys & (FLAG_MOVEUP | FLAG_MOVEDOWN))
             {
                 model = ((player[i].playkeys & FLAG_MOVEUP) ? prevplayermodelcoln : nextplayermodelcoln)(model, i);
                 strcpy(player[i].name, model->name);
@@ -16121,21 +16194,33 @@ void updatestatus()
 
                 player[i].playkeys = 0;
             }
+            else if(player[i].playkeys & FLAG_ATTACK2)
+            {
+                model = selectrandomplayer(model);
+                strcpy(player[i].name, model->name);
+
+                player[i].colourmap = (colourselect) ? selectrandomcolourmap(model, i) : 0;
+
+                player[i].playkeys = 0;
+            }
         }
         else if( !nojoin && (player[i].credits || credits || (!player[i].hasplayed && noshare)) )
         {
             if(player[i].playkeys & FLAG_START)
             {
+                int prev_color = 0;
                 player[i].lives = 0;
                 players[i] = 1;
                 
                 if(skipselect[i][0])
                 {
                     name = skipselect[i];
+                    model = findmodel(name);
                 }
                 else if(player[i].name[0])
                 {
                     name = player[i].name;
+                    model = findmodel(name);
                     prev_color = player[i].colourmap;
                 }
                 else
@@ -16144,23 +16229,11 @@ void updatestatus()
                 }
                 if(!model && name)
                 {
-                    model = findmodel(name);
-                    if(!model)
-                    {
-                        model = load_cached_model(name, "continue_screen", 3, true);
-                    }
+                    model = load_cached_model(name, "continue_screen", 3, true);
                 }
                 strncpy(player[i].name, model->name, MAX_NAME_LEN);
 
-                if(prev_color >= 0)
-                {
-                    --prev_color;
-                    if(prev_color < 0)
-                    {
-                        prev_color = model->maps_loaded;
-                    }
-                }
-                player[i].colourmap = (colourselect && (set->nosame & 2)) ? nextcolourmapn(model, prev_color, i) : 0;
+                player[i].colourmap = (colourselect && (set->nosame & 2)) ? nextcolourmapn(model, prev_color-1, i) : prev_color;
 
                 player[i].joining = 1;
                 player[i].disablekeys = player[i].playkeys = player[i].newkeys = player[i].releasekeys = 0;
@@ -36594,6 +36667,18 @@ int selectplayer(int *players, char *filename, int useSavedGame)
                 else if(player[i].newkeys & (FLAG_JUMP | FLAG_SPECIAL) && colourselect && example[i])
                 {
                     player[i].colourmap = ((player[i].newkeys & FLAG_JUMP) ? nextcolourmapn : prevcolourmapn)(example[i]->model, player[i].colourmap, i);
+                    ent_set_colourmap(example[i], player[i].colourmap);
+                }
+                else if(player[i].newkeys & FLAG_ATTACK2 && example[i])
+                {
+                    if(SAMPLE_BEEP >= 0)
+                    {
+                        sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
+                    }
+                    ent_set_model(example[i], selectrandomplayer(example[i]->model)->name, 0);
+                    strcpy(player[i].name, example[i]->model->name);
+
+                    player[i].colourmap = (colourselect) ? selectrandomcolourmap(example[i]->model, i) : 0;
                     ent_set_colourmap(example[i], player[i].colourmap);
                 }
                 else if((player[i].newkeys & FLAG_ATTACK) && example[i])
