@@ -5015,7 +5015,6 @@ s_model *prevplayermodelcoln(s_model *current, int p)
 
 s_model *selectrandomplayer(s_model *current)
 {
-    
     unsigned short players[MAX_SEL_PLAYERS];
     unsigned short player_count = 0;
     s_set_entry *set = levelsets + current_set;
@@ -5028,22 +5027,17 @@ s_model *selectrandomplayer(s_model *current)
             model_cache[i].clearcount <= bonus)
         {
             bool allowed = true;
-            // If no same is allowed we exclude all player selections
+            // If no same is allowed we exclude all player selections except current
             if(set->nosame & 1)
             {
                 for(int player_index = 0; player_index < MAX_PLAYERS; ++player_index)
                 {
-                    if(stricmp(model_cache[i].name, player[player_index].name) == 0)
+                    if(model_cache[i].model != current && stricmp(model_cache[i].name, player[player_index].name) == 0)
                     {
                         allowed = false;
                         break;
                     }
                 }
-            }
-            // Otherwise we only exclude current player selection
-            else if(model_cache[i].model == current)
-            {
-                allowed = false;
             }
             
             if(allowed)
