@@ -90,12 +90,17 @@ int SetVideoMode(int w, int h, int bpp, bool gl)
 	static bool last_gl = false;
 	static int last_x = SDL_WINDOWPOS_UNDEFINED;
 	static int last_y = SDL_WINDOWPOS_UNDEFINED;
+	int last_w = w;
+	int last_h = h;
 
 	if(gl) flags |= SDL_WINDOW_OPENGL;
 	if(savedata.fullscreen) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
 	if(!(SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN_DESKTOP))
+	{
 		SDL_GetWindowPosition(window, &last_x, &last_y);
+		SDL_GetWindowSize(window, &last_w, &last_h);
+	}
 
 	if(window && gl != last_gl)
 	{
@@ -123,6 +128,11 @@ int SetVideoMode(int w, int h, int bpp, bool gl)
 #endif
 			SDL_SetWindowFullscreen(window, 0);
 			SDL_SetWindowSize(window, w, h);
+			if(w != last_w || h != last_h)
+			{
+				last_x = SDL_WINDOWPOS_CENTERED;
+				last_y = SDL_WINDOWPOS_CENTERED;
+			}
 			SDL_SetWindowPosition(window, last_x, last_y);
 			SDL_ShowWindow(window);
 		}
