@@ -65,7 +65,7 @@
 
 #define		COMPATIBLEVERSION	0x00033748
 #define		CV_SAVED_GAME		0x00033747
-#define		CV_HIGH_SCORE		0x00033747
+#define		CV_HIGH_SCORE		0x00033748
 #define     GAME_SPEED          200
 #define		THINK_SPEED			2
 #define		COUNTER_SPEED		(GAME_SPEED*2)
@@ -91,6 +91,8 @@
 #define     MAX_ARG_COUNT       128             //MIO cambio del valor original 64, para aumentar el tamaño máximo de personajes
 #define     MAX_ATTACK_IDS      100             // Max amount of memorized attack ids
 #define     MAX_SEL_PLAYERS     200             // Max amount of selectable players. Used during random select.
+#define     MAX_DIFFICULTIES    10              // Max number of difficulties per mode
+#define     NUM_INITIALS        3               // Number of initials in hall of fame
 
 /*
 Note: the min Z coordinate of the player is important
@@ -1563,6 +1565,11 @@ typedef struct
     unsigned compatibleversion;
     unsigned highsc[10];
     char hscoren[10][MAX_NAME_LEN];
+    char hscorei[10][3];
+    bool is1CC[10];
+    unsigned short mode;
+    unsigned short difficulty;
+    unsigned short credits;
 } s_savescore;
 
 typedef struct
@@ -2575,6 +2582,7 @@ typedef struct
     int saveflag;
     int nosame;
     int noshowcomplete;
+    s_savescore* savescore;
 } s_set_entry;
 
 typedef struct
@@ -2783,6 +2791,7 @@ void    loadsettings(void);
 void    loadfromdefault(void);
 void    clearSavedGame(void);
 void    clearHighScore(void);
+void    initHighScore(void);
 int    saveGameFile(void);
 int     loadGameFile(void);
 int		saveScriptFile(void);
@@ -3119,6 +3128,8 @@ int playgif(char *filename, int x, int y, int noskip);
 void playscene(char *filename);
 void gameover();
 void hallfame(int addtoscore);
+void hallfame_add();
+void hallfame_show();
 void showcomplete(int num);
 int playlevel(char *filename);
 int selectplayer(int *players, char *filename, int useSavedGame);

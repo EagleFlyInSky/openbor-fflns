@@ -64,6 +64,18 @@ List *modelstxtcmdlist = NULL;
 List *levelcmdlist = NULL;
 List *levelordercmdlist = NULL;
 
+// New savescore system
+s_savescore *savescore_modes = NULL;
+unsigned short savescore_modes_count = 0;
+char *savescore_difficulty_variable = NULL;
+char *savescore_difficulty_names[MAX_DIFFICULTIES]; 
+unsigned short savescore_difficulty_count = 0;
+char *savescore_initials = NULL;
+char savescore_initials_default[41] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.!?-_";
+int savescore_max_time = 20;
+int savescore_min_time = 8;
+int savescore_extra_time = 3;
+
 int atkchoices[MAX_ANIS]; //tempory values for ai functions, should be well enough LOL
 
 //see types.h
@@ -2560,7 +2572,62 @@ void clearHighScore()
     }
 }
 
+void initHighScore()
+{
+    FILE *handle = NULL;
+    char path[MAX_BUFFER_LEN] = {""};
+    char tmpname[MAX_BUFFER_LEN] = {""};
+    
+    // if there are no savescore modes we use the old savescore system
+    if(!savescore_modes)
+    {
+       loadHighScoreFile();
+       return; 
+    }
+    
+    // save in each mode a direct pointer to its savescore
+    for(int i = 0; i < savescore_modes_count; ++i)
+    {
+        s_savescore *savescore_mode = &savescore_modes[i * savescore_difficulty_count];
+        levelsets[savescore_mode->mode].savescore =  savescore_mode;
+    }
 
+    // load savescore modes from file
+    getBasePath(path, "Saves", 0);
+    getPakName(tmpname, 1);
+    strcat(path, tmpname);
+    handle = fopen(path, "rb");
+    if(handle == NULL)
+    {
+        return;
+    }
+
+    // read savescores until we find one with a not compatible format
+    int valid = 1;
+    while(valid)
+    {
+        s_savescore savescore_loaded;
+        valid = fread(&savescore_loaded, 1, sizeof(s_savescore), handle);
+        
+        // check if it is a savescore with the expected format
+        if(savescore_loaded.compatibleversion == CV_HIGH_SCORE)
+        {
+            unsigned int mode = savescore_loaded.mode;
+            unsigned int difficulty = savescore_loaded.difficulty;
+            
+            // check if the mode and difficulty exist
+            if(difficulty < savescore_difficulty_count &&
+                mode < num_difficulties &&
+                levelsets[mode].savescore &&
+                levelsets[mode].savescore[difficulty].compatibleversion == CV_HIGH_SCORE)
+            {
+                levelsets[mode].savescore[difficulty] = savescore_loaded;
+            }
+        }
+    }
+
+    fclose(handle);
+}
 
 int saveGameFile()
 {
@@ -2653,7 +2720,17 @@ int saveHighScoreFile()
     {
         return 0;
     }
-    fwrite(&savescore, 1, sizeof(savescore), handle);
+
+    // if there are no savescore modes we use the old savescore system
+    if(savescore_modes)
+    {
+        fwrite(savescore_modes, savescore_modes_count * savescore_difficulty_count, sizeof(s_savescore), handle);
+    }
+    else
+    {
+        fwrite(&savescore, 1, sizeof(savescore), handle);
+    }
+    
     fclose(handle);
     return 1;
 #else
@@ -12799,6 +12876,12 @@ void unload_levelorder()
             }
         }
 
+        if(savescore_modes)
+        {
+            free(savescore_modes);
+            savescore_modes = NULL;
+        }
+        
         free(levelsets);
         levelsets = NULL;
     }
@@ -13183,6 +13266,73 @@ void load_levelorder()
             branch_name[0] = 0;
             le = NULL;
             break;
+        case CMD_LEVELORDER_HALLFAME:
+        {
+            int available_difficulties_count = (arglist.count - 1) / 2;
+            // check if we are using the new savescore system
+            if(savescore_difficulty_count > 0 && available_difficulties_count > 0)
+            {
+                ++savescore_modes_count;
+                if(savescore_modes)
+                {
+                    savescore_modes = realloc(savescore_modes, sizeof(s_savescore) * savescore_difficulty_count * savescore_modes_count);
+                }
+                else
+                {
+                    savescore_modes = malloc(sizeof(s_savescore) * savescore_difficulty_count);
+                }
+
+                // initialize the new memory block with 0s
+                s_savescore *savescore_mode = &savescore_modes[(savescore_modes_count - 1) * savescore_difficulty_count];
+                memset(savescore_mode, 0, sizeof(s_savescore) * savescore_difficulty_count);
+
+                // init each available difficulty for this mode
+                for(int difficulty_index = 0; difficulty_index < savescore_difficulty_count; ++difficulty_index)
+                {
+                    savescore_mode[difficulty_index].mode = num_difficulties - 1;
+                    savescore_mode[difficulty_index].difficulty = difficulty_index;
+                }
+
+                // enable the available difficulties in this mode
+                for(int difficulty_index = 0; difficulty_index < available_difficulties_count; ++difficulty_index)
+                {
+                    int arg_index = (difficulty_index * 2) + 1; 
+                    int difficulty = GET_INT_ARG(arg_index);
+                    int credits = GET_INT_ARG(arg_index + 1);
+                    if(difficulty >= 0 && difficulty < savescore_difficulty_count)
+                    {
+                        savescore_mode[difficulty].compatibleversion = CV_HIGH_SCORE;
+                        savescore_mode[difficulty].credits = credits;
+                    }
+                }
+            }
+            break;
+        }
+        case CMD_LEVELORDER_HALLFAMEDIFFICULTIES:
+        {
+            savescore_difficulty_count = arglist.count - 2;
+            if(savescore_difficulty_count > 0)
+            {
+                savescore_difficulty_variable = NAME(GET_ARG(1));
+                for(int difficulty_index = 0; difficulty_index < savescore_difficulty_count; ++difficulty_index)
+                {
+                    savescore_difficulty_names[difficulty_index] = NAME(GET_ARG(difficulty_index + 2));
+                }
+            }
+            break;
+        }
+        case CMD_LEVELORDER_HALLFAMEINITIALS:
+        {
+            savescore_initials = NAME(GET_ARG(1));
+            break;
+        }
+        case CMD_LEVELORDER_HALLFAMETIMES:
+        {
+            savescore_max_time = GET_INT_ARG(1);
+            savescore_min_time = GET_INT_ARG(2);
+            savescore_extra_time = GET_INT_ARG(3);
+            break;
+        }
         case CMD_LEVELORDER_IFCOMPLETE:
             CHKDEF;
             set->ifcomplete = GET_INT_ARG(1);
@@ -14206,6 +14356,8 @@ void load_levelorder()
             psmenu[i][3] = 225 + videomodes.vShift;
         }
     }
+
+    initHighScore();
 
 lCleanup:
 
@@ -35428,7 +35580,6 @@ void startup()
 #endif
 
     ob_inittrans();
-    loadHighScoreFile();
     clearSavedGame();
 
     init_videomodes(1);
@@ -35871,30 +36022,175 @@ void hallfame(int addtoscore)
         }
     }
 
-    if(addtoscore)
+    // if there are no savescore modes we use the old savescore system
+    if(!savescore_modes)
     {
-        for(p = 0; p < levelsets[current_set].maxplayers; p++)
+        if(addtoscore)
         {
-            if(player[p].score > savescore.highsc[9])
+            for(p = 0; p < levelsets[current_set].maxplayers; p++)
             {
-                savescore.highsc[9] = player[p].score;
-                strcpy(savescore.hscoren[9], player[p].name);
-                topten[9] = 1;
-
-                for(i = 8; i >= 0 && player[p].score > savescore.highsc[i]; i--)
+                if(player[p].score > savescore.highsc[9])
                 {
-                    score = savescore.highsc[i];
-                    strcpy(name, savescore.hscoren[i]);
-                    savescore.highsc[i] = player[p].score;
-                    strcpy(savescore.hscoren[i], player[p].name);
-                    topten[i] = 1;
-                    savescore.highsc[i + 1] = score;
-                    strcpy(savescore.hscoren[i + 1], name);
-                    topten[i + 1] = 0;
+                    savescore.highsc[9] = player[p].score;
+                    strcpy(savescore.hscoren[9], player[p].name);
+                    topten[9] = 1;
+
+                    for(i = 8; i >= 0 && player[p].score > savescore.highsc[i]; i--)
+                    {
+                        score = savescore.highsc[i];
+                        strcpy(name, savescore.hscoren[i]);
+                        savescore.highsc[i] = player[p].score;
+                        strcpy(savescore.hscoren[i], player[p].name);
+                        topten[i] = 1;
+                        savescore.highsc[i + 1] = score;
+                        strcpy(savescore.hscoren[i + 1], name);
+                        topten[i + 1] = 0;
+                    }
                 }
             }
+            saveHighScoreFile();
         }
-        saveHighScoreFile();
+
+        _time = 0;
+
+        while(!done)
+        {
+            y = 56;
+            if(!hiscorebg)
+            {
+                font_printf(_strmidx(3, Tr("Hall Of Fame")), y - fontheight(3) - 10 + videomodes.vShift, 3, 0, Tr("Hall Of Fame"));
+            }
+
+            for(i = 0; i < 10; i++)
+            {
+                font_printf(_colx(topten[i], col1), y + videomodes.vShift, topten[i], 0, "%2i.  %s", i + 1, savescore.hscoren[i]);
+                font_printf(_colx(topten[i], col2), y + videomodes.vShift, topten[i], 0, (scoreformat ? "%09lu" : "%u"), savescore.highsc[i]);
+                y += (videomodes.vRes - videomodes.vShift - 56 - 32) / 10; //font_heights[topten[i]] + 6;
+            }
+
+            update(0, 0);
+            done |= (_time > GAME_SPEED * 8);
+            done |= (bothnewkeys & (FLAG_START + FLAG_ESC));
+        }
+    }
+    else
+    {
+        if(addtoscore)
+        {
+            hallfame_add();
+        }
+        else
+        {
+            hallfame_show();
+        }
+    }
+
+    unload_background();
+    hallOfFame = 0;
+}
+
+void hallfame_add()
+{
+    int done = 0;
+    bool allow_skip = true;
+    bool all_players_done = true;
+    int p, y;
+    int col1 = -14;
+    int col2 = 11;
+
+    int new_record_player[10];
+    int player_ranking_pos[MAX_PLAYERS];
+    int player_initials[MAX_PLAYERS][NUM_INITIALS];
+    int player_initial_index[MAX_PLAYERS];
+    s_savescore *savescore_mode = NULL;
+    int difficulty = 0;
+    int time_limit = savescore_min_time;
+
+    // initializations
+    memset(new_record_player, -1, sizeof(int) * 10);
+    memset(player_ranking_pos, -1, sizeof(int) * MAX_PLAYERS);
+    memset(player_initials, 0, sizeof(int) * MAX_PLAYERS * NUM_INITIALS);
+    memset(player_initial_index, 0, sizeof(int) * MAX_PLAYERS);
+
+    // get current difficulty
+    if(List_FindByName(global_var_list.list, savescore_difficulty_variable))
+    {
+        ScriptVariant *var = (ScriptVariant *)List_Retrieve(global_var_list.list);
+        if(var->vt == VT_INTEGER)
+        {
+            difficulty = var->lVal;
+        }
+    }
+
+    // check if it is a valid mode and difficulty
+    if(difficulty < savescore_difficulty_count && levelsets[current_set].savescore)
+    {
+        savescore_mode = &levelsets[current_set].savescore[difficulty];
+    }
+    if(!savescore_mode || savescore_mode->compatibleversion != CV_HIGH_SCORE)
+    {
+        return;
+    }
+
+    // only enter record if gameover or finished game
+    bool isFinished = (current_level >= levelsets[current_set].numlevels);
+    bool isGameOver = true;
+    for(p = 0; p < MAX_PLAYERS; ++p)
+    {
+        if(player[p].ent)
+        {
+            isGameOver = false;
+            break;
+        }
+    }
+
+    if(isFinished || isGameOver)
+    {
+        // insert each player score in the correct table position
+        for(p = 0; p < MAX_PLAYERS; ++p)
+        {
+            bool isAlive = player[p].ent;
+            bool is1CC = isFinished && isAlive && noshare && (player[p].credits == savescore_mode->credits - 1);
+            char initials[NUM_INITIALS];
+            for(int initial_index = 0; initial_index < NUM_INITIALS; ++initial_index)
+            {
+                int initial = player_initials[p][initial_index];
+                initials[initial_index] = (savescore_initials ? savescore_initials : savescore_initials_default)[initial];
+            }
+            for(int table_pos = 9; table_pos >= 0 && player[p].score > savescore_mode->highsc[table_pos]; --table_pos)
+            {
+                // if there is a new record give some time to enter initials
+                allow_skip = false;
+                all_players_done = false;
+                time_limit = savescore_max_time;
+                
+                // if not the last row we move the info one row below
+                if(table_pos < 9)
+                {
+                    savescore_mode->highsc[table_pos + 1] = savescore_mode->highsc[table_pos];
+                    strcpy(savescore_mode->hscoren[table_pos + 1], savescore_mode->hscoren[table_pos]);
+                    memcpy(savescore_mode->hscorei[table_pos + 1], savescore_mode->hscorei[table_pos], sizeof(char) * NUM_INITIALS);
+                    savescore_mode->is1CC[table_pos + 1] = savescore_mode->is1CC[table_pos];
+                    new_record_player[table_pos + 1] = new_record_player[table_pos];
+                }
+
+                // move other player positions in table if necessary
+                if(new_record_player[table_pos] >= 0)
+                {
+                    player_ranking_pos[new_record_player[table_pos]] = table_pos + 1;
+                }
+
+                // copy player info to the current row
+                savescore_mode->highsc[table_pos] = player[p].score;
+                strcpy(savescore_mode->hscoren[table_pos], player[p].name);
+                memcpy(savescore_mode->hscorei[table_pos], initials, sizeof(char) * NUM_INITIALS);
+                savescore_mode->is1CC[table_pos] = is1CC;
+                new_record_player[table_pos] = p;
+
+                // save current player position in table
+                player_ranking_pos[p] = table_pos;
+            }
+        }
     }
 
     _time = 0;
@@ -35907,23 +36203,273 @@ void hallfame(int addtoscore)
             font_printf(_strmidx(3, Tr("Hall Of Fame")), y - fontheight(3) - 10 + videomodes.vShift, 3, 0, Tr("Hall Of Fame"));
         }
 
-        for(i = 0; i < 10; i++)
+        // mode and difficulty
+        _menutextm(0, -10, 0, "%s", levelsets[current_set].name);
+        _menutextm(0, -9, 0, "%s", savescore_difficulty_names[difficulty]);
+        
+        for(int i = 0; i < 10; i++)
         {
-            font_printf(_colx(topten[i], col1), y + videomodes.vShift, topten[i], 0, "%2i.  %s", i + 1, savescore.hscoren[i]);
-            font_printf(_colx(topten[i], col2), y + videomodes.vShift, topten[i], 0, (scoreformat ? "%09lu" : "%u"), savescore.highsc[i]);
+            int player = new_record_player[i];
+            int highlighted_line = player >= 0;
+            
+            // player number
+            if(highlighted_line)
+            {
+                font_printf(_colx(highlighted_line, col1 - 2), y + videomodes.vShift, highlighted_line, 0, "P%d", player + 1);
+            }
+
+            // rank position
+            font_printf(_colx(highlighted_line, col1), y + videomodes.vShift, highlighted_line, 0, "%2i.", i + 1);
+
+            // initials
+            int initial_colx = _colx(0, col1 + 2);
+            int initial_extra_separation = font_string_width(0, "[");
+            for(int initial_index = 0; initial_index < NUM_INITIALS; ++initial_index)
+            {
+                int selected_initial = highlighted_line && player_initial_index[player] == initial_index;
+                int highlighted_initial = highlighted_line && !selected_initial;
+                if(selected_initial)
+                {
+                    font_printf(initial_colx - initial_extra_separation, y + videomodes.vShift, 0, 0, "[");
+                }
+                font_printf(initial_colx, y + videomodes.vShift, highlighted_initial, 0, "%c", savescore_mode->hscorei[i][initial_index]);
+                if(selected_initial)
+                {
+                    font_printf(initial_colx + fontmonowidth(0), y + videomodes.vShift, 0, 0, "]");
+                }
+                initial_colx += fontmonowidth(0) + initial_extra_separation;
+            }
+
+            // name
+            font_printf(_colx(highlighted_line, col1 + 7), y + videomodes.vShift, highlighted_line, 0, "%s", savescore_mode->hscoren[i]);
+
+            // score
+            int score_width = font_string_width(highlighted_line, (scoreformat ? "%09lu" : "%u"), savescore_mode->highsc[i]);
+            font_printf(_colx(highlighted_line, col2) - score_width, y + videomodes.vShift, highlighted_line, 0, (scoreformat ? "%09lu" : "%u"), savescore_mode->highsc[i]);
+            
+            // 1CC
+            if(savescore_mode->is1CC[i])
+            {
+                font_printf(_colx(highlighted_line, col2 + 1), y + videomodes.vShift, highlighted_line, 0, "1CC");
+            }
             y += (videomodes.vRes - videomodes.vShift - 56 - 32) / 10; //font_heights[topten[i]] + 6;
         }
 
         update(0, 0);
-        done |= (_time > GAME_SPEED * 8);
-        done |= (bothnewkeys & (FLAG_START + FLAG_ESC));
+        
+        // check elapsed time
+        done |= (_time > GAME_SPEED * time_limit);
+        // check skip
+        done |= allow_skip && (bothnewkeys & (FLAG_START | FLAG_ESC));
+        
+        if(!all_players_done)
+        {
+            all_players_done = true;
+
+            // process player inputs
+            for(p = 0; p < levelsets[current_set].maxplayers; ++p)
+            {   
+                int ranking_pos = player_ranking_pos[p];
+                int *initial_index = &player_initial_index[p];
+                int *initial = &player_initials[p][*initial_index];
+                // check if in rank and not already done
+                if(ranking_pos >= 0 && *initial_index < NUM_INITIALS)
+                {
+                    // previous character
+                    if(player[p].newkeys & FLAG_MOVEDOWN)
+                    {
+                        sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
+                        --*initial;
+                        if(*initial < 0)
+                        {
+                            *initial = strlen(savescore_initials ? savescore_initials : savescore_initials_default) - 1;
+                        }
+                    }
+                    // next character
+                    else if(player[p].newkeys & FLAG_MOVEUP)
+                    {
+                        sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
+                        ++*initial;
+                        if(*initial > strlen(savescore_initials ? savescore_initials : savescore_initials_default) - 1)
+                        {
+                            *initial = 0;
+                        }
+                    }
+                    // previous initial
+                    else if(player[p].newkeys & FLAG_MOVELEFT)
+                    {
+                        sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
+                        --*initial_index;
+                        if(*initial_index < 0)
+                        {
+                            *initial_index = 0;
+                        }
+                    }
+                    // next initial
+                    else if(player[p].newkeys & (FLAG_MOVERIGHT | FLAG_ATTACK))
+                    {
+                        if((*initial_index < NUM_INITIALS - 1) || (player[p].newkeys & FLAG_ATTACK))
+                        {
+                            sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
+                            ++*initial_index;
+                        }
+                    }
+                    // done
+                    else if(player[p].newkeys & FLAG_START)
+                    {
+                        sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
+                        *initial_index = NUM_INITIALS;
+                    }
+
+                    // update status
+                    if(*initial_index < NUM_INITIALS)
+                    {
+                        initial = &player_initials[p][*initial_index];
+                        savescore_mode->hscorei[ranking_pos][*initial_index] = (savescore_initials ? savescore_initials : savescore_initials_default)[*initial];
+                        all_players_done = false;
+                    }
+                }
+            }
+            // if all players are done give a few more seconds before exiting
+            if(all_players_done)
+            {
+                time_limit = (_time / GAME_SPEED) + savescore_extra_time;
+            }
+            // otherwise print remaining time
+            else
+            {
+                _menutextm(0, 10, 0, "Time: %02d", time_limit - (_time / GAME_SPEED));
+            }
+        }
     }
-    unload_background();
-    hallOfFame = 0;
+
+    saveHighScoreFile();
 }
 
+void hallfame_show()
+{
+    int done = 0;
+    int y;
+    int col1 = -14;
+    int col2 = 11;
 
+    s_savescore *savescore_mode = NULL;
+    bool selected_menu = 0;
+    int mode = 0;
+    int difficulty = 0;
+    
+    while(!done)
+    {
+        y = 56;
+        if(!hiscorebg)
+        {
+            font_printf(_strmidx(3, Tr("Hall Of Fame")), y - fontheight(3) - 10 + videomodes.vShift, 3, 0, Tr("Hall Of Fame"));
+        }
 
+        savescore_mode = &savescore_modes[mode * savescore_difficulty_count + difficulty];
+
+        // Mode selection
+        _menutextm((selected_menu ? 0 : 1), -10, 0, (selected_menu ? "%s" : "< %s >"), levelsets[savescore_mode->mode].name);
+
+        // Difficulty selection
+        _menutextm((selected_menu ? 1 : 0), -9, 0, (selected_menu ? "< %s >" : "%s"), savescore_difficulty_names[difficulty]);
+        
+        if(savescore_mode->compatibleversion == CV_HIGH_SCORE)
+        {
+            for(int i = 0; i < 10; i++)
+            {
+                // rank position
+                font_printf(_colx(0, col1), y + videomodes.vShift, 0, 0, "%2i.", i + 1);
+
+                // initials
+                int initial_colx = _colx(0, col1 + 2);
+                int initial_extra_separation = font_string_width(0, "[");
+                for(int initial_index = 0; initial_index < NUM_INITIALS; ++initial_index)
+                {
+                    font_printf(initial_colx, y + videomodes.vShift, 0, 0, "%c", savescore_mode->hscorei[i][initial_index]);
+                    initial_colx += fontmonowidth(0) + initial_extra_separation;
+                }
+
+                // name
+                font_printf(_colx(0, col1 + 7), y + videomodes.vShift, 0, 0, "%s", savescore_mode->hscoren[i]);
+
+                // score
+                int score_width = font_string_width(0, (scoreformat ? "%09lu" : "%u"), savescore_mode->highsc[i]);
+                font_printf(_colx(0, col2) - score_width, y + videomodes.vShift, 0, 0, (scoreformat ? "%09lu" : "%u"), savescore_mode->highsc[i]);
+                
+                // 1CC
+                if(savescore_mode->is1CC[i])
+                {
+                    font_printf(_colx(0, col2 + 1), y + videomodes.vShift, 0, 0, "1CC");
+                }
+                y += (videomodes.vRes - videomodes.vShift - 56 - 32) / 10; //font_heights[topten[i]] + 6;
+            }
+        }
+        else
+        {
+            _menutextm(0, -1, 0, "Not available");
+        }
+
+        update(0, 0);
+        
+        // check exit
+        done |= (bothnewkeys & (FLAG_ESC | FLAG_ANYBUTTON));
+
+        // process player inputs
+        if(bothnewkeys & FLAG_MOVELEFT)
+        {
+            sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
+            // previous mode
+            if(!selected_menu)
+            {
+                --mode;
+            }
+            // previous difficulty
+            else
+            {
+                --difficulty;
+            }
+        }
+        else if(bothnewkeys & FLAG_MOVERIGHT)
+        {
+            sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
+             // next mode
+            if(!selected_menu)
+            {
+                ++mode;
+            }
+            // next difficulty
+            else
+            {
+                ++difficulty;
+            }
+        }
+        // change menu item
+        if(bothnewkeys & (FLAG_MOVEUP | FLAG_MOVEDOWN))
+        {
+           sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
+           selected_menu = !selected_menu;
+        }
+
+        // clamp values
+        if(mode >= savescore_modes_count)
+        {
+            mode = 0;
+        }
+        else if(mode < 0)
+        {
+            mode = savescore_modes_count - 1; 
+        }
+        if(difficulty >= savescore_difficulty_count)
+        {
+            difficulty = 0;
+        }
+        else if(difficulty < 0)
+        {
+            difficulty = savescore_difficulty_count - 1; 
+        }
+    }
+}
 
 // Level completed, show bonus stuff
 void showcomplete(int num)
@@ -37165,7 +37711,7 @@ int load_saved_game()
                 {
                     allow_load = false;
                     _menutext(0, col2, -1, "%s", savelevel[saveslot].dName);
-                    _menutext(0, col2, 0, "(Incompatible)");
+                    _menutext(0, col2, 0, "(Not compatible)");
                 }
                 else
                 {
