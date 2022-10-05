@@ -102,17 +102,23 @@ int SetVideoMode(int w, int h, int bpp, bool gl)
 		SDL_GetWindowSize(window, &last_w, &last_h);
 	}
 
+	// Destruction must be done in the creation inversed order
+	if(texture)
+	{
+		SDL_DestroyTexture(texture);
+		texture = NULL;
+	}
+	if(renderer)
+	{
+		SDL_DestroyRenderer(renderer);
+		renderer = NULL;
+	}
 	if(window && gl != last_gl)
 	{
 		SDL_DestroyWindow(window);
 		window = NULL;
 	}
 	last_gl = gl;
-
-	if(renderer) SDL_DestroyRenderer(renderer);
-	if(texture)  SDL_DestroyTexture(texture);
-	renderer = NULL;
-	texture = NULL;
 
 	if(window)
 	{
