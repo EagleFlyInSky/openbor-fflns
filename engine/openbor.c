@@ -2425,6 +2425,9 @@ void clearsettings()
     savedata.uselog = 1;
     savedata.debuginfo = 0;
     savedata.fullscreen = 0;
+    #ifdef RASPBERRY
+    savedata.fullscreen = 1;
+    #endif
     savedata.vsync = 1;
     savedata.stretch = 0;
 

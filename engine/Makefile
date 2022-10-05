@@ -10,7 +10,7 @@
 #
 #               	OpenBOR Makefile for ALL TARGET_PLATFORMs
 #
-#             PSP, PS3, Wii, Pandora, Windows, Darwin & Linux
+#             PSP, PS3, Wii, Pandora, Raspberry Pi, Windows, Darwin & Linux
 #
 #----------------------------------------------------------------------------------------------------
 
@@ -134,9 +134,27 @@ TARGET_FINAL    = $(VERSION_NAME)
 TARGET_PLATFORM = PANDORA
 BUILD_LINUX     = 1
 BUILD_SDL       = 1
-BUILD_GLES      = 1
-BUILD_OPENGL    = 1
-BUILD_LOADGL    = 1
+BUILD_GFX       = 1
+BUILD_PTHREAD   = 1
+BUILD_SDL_IO    = 1
+BUILD_TREMOR    = 1
+BUILDING        = 1
+CC  	        = $(PNDDEV)/bin/arm-none-linux-gnueabi-gcc
+INCLUDES        = $(PNDDEV)/include \
+                  $(PNDDEV)/include/SDL
+OBJTYPE         = elf
+LIBRARIES       = $(PNDDEV)/lib
+ifeq ($(BUILD_PANDORA), 0)
+BUILD_DEBUG     = 1
+endif
+endif
+
+ifdef BUILD_RASPBERRY
+TARGET          = $(VERSION_NAME).elf
+TARGET_FINAL    = $(VERSION_NAME)
+TARGET_PLATFORM = RASPBERRY
+BUILD_LINUX     = 1
+BUILD_SDL       = 1
 BUILD_WEBM      = 1
 BUILD_GFX       = 1
 BUILD_PTHREAD   = 1
@@ -144,15 +162,12 @@ BUILD_SDL_IO    = 1
 BUILD_TREMOR    = 1
 BUILDING        = 1
 CC  	        = gcc
-INCLUDES        = $(PNDDEV)/include \
-                  $(PNDDEV)/include/SDL
 OBJTYPE         = elf
 LIBRARIES       = .
-ifeq ($(BUILD_PANDORA), 0)
+ifeq ($(BUILD_RASPBERRY), 0)
 BUILD_DEBUG     = 1
 endif
 endif
-
 
 ifdef BUILD_WII
 TARGET 	        = $(VERSION_NAME).elf
@@ -199,6 +214,9 @@ ifdef BUILD_DARWIN
 STRIP           = $(PREFIX)strip $(TARGET) -o $(TARGET_FINAL)
 endif
 ifdef BUILD_PANDORA
+STRIP 	        = $(PNDDEV)/bin/arm-none-linux-gnueabi-strip $(TARGET) -o $(TARGET_FINAL)
+endif
+ifdef BUILD_RASPBERRY
 STRIP 	        = strip $(TARGET) -o $(TARGET_FINAL)
 endif
 ifdef BUILD_WII
@@ -482,8 +500,12 @@ endif
 
 
 ifdef BUILD_PANDORA
-CFLAGS         += -marm -mfloat-abi=hard -fomit-frame-pointer -ffast-math -O2
 CFLAGS         += -DLINUX
+endif
+
+
+ifdef BUILD_RASPBERRY
+CFLAGS         += -DLINUX -marm -mfloat-abi=hard -fomit-frame-pointer -ffast-math -O2
 endif
 
 
@@ -570,11 +592,7 @@ ifdef BUILD_SDL
 ifeq ($(findstring DGE, $(SDKPATH)), DGE)
 LIBS           += -lSDL -lSDL_gfx -lts
 else
-ifdef BUILD_PANDORA
-LIBS           += -Wl,-rpath,$(LIBRARIES) -lSDL2 -lSDL2_gfx -lGL
-else
 LIBS           += -Wl,-rpath,$(LIBRARIES) -lSDL2 -lSDL2_gfx
-endif
 endif
 endif
 
@@ -741,6 +759,7 @@ all:
 	@echo make BUILD_WII=1
 	@echo make BUILD_WIN=1
 	@echo make BUILD_PANDORA=1
+	@echo make BUILD_RASPBERRY=1
 	@echo make BUILD_LINUX=1
 	@echo
 	@echo Cleanup Intermediate Files:

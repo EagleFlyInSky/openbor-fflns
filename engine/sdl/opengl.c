@@ -225,8 +225,7 @@ int video_gl_set_mode(s_videomodes videomodes)
 
 	// create an OpenGL compatibility context, not a core or ES context
 #ifndef WIN // except on Windows, where some Nvidia drivers really don't like us doing this
-//	zanac, these attributes don't work well in allwinner (rasbperry too?)
-//	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 #endif
 
 	// get window and initialize OpenGL context
@@ -236,9 +235,8 @@ int video_gl_set_mode(s_videomodes videomodes)
 		printf("Failed to create OpenGL-compatible window (%s)...", SDL_GetError());
 		goto error;
 	}
-//	zanac, it seems that you should always create a new context without delete the old one, this happen in allwinner (rasbperry too?)
-//	if((context = SDL_GL_GetCurrentContext()))
-//		SDL_GL_DeleteContext(context);
+	if((context = SDL_GL_GetCurrentContext()))
+		SDL_GL_DeleteContext(context);
 	context = SDL_GL_CreateContext(window);
 
 	// make sure the context was created successfully

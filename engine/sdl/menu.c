@@ -443,7 +443,7 @@ static int ControlBGM()
 static void initMenu(int type)
 {
 
-#ifdef ANDROID
+#if defined ANDROID || defined RASPBERRY
 	isWide = (float)nativeHeight/(float)nativeWidth < 3.0f/4.0f;
 	isFull = 1;
 	bpp = 32;
@@ -457,7 +457,7 @@ static void initMenu(int type)
 	videomodes.hRes = isWide ? 480 :320;
 	videomodes.vRes = isWide ? 272 :240;
 	videomodes.pixel = pixelbytes[PIXEL_32];
-#ifndef ANDROID
+#if !defined ANDROID && !defined RASPBERRY
 	videomodes.hScale = 2.0f;
 	videomodes.vScale = 2.0f;
 	savedata.hwscale = 2.0f;
