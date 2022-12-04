@@ -38595,16 +38595,16 @@ void menu_options_input()
                 control_init(savedata.usejoy);
                 break;
             case 1:
-                keyboard_setup(0);
+                if( bothnewkeys & FLAG_ANYBUTTON) keyboard_setup(0);
                 break;
             case 2:
-                keyboard_setup(1);
+                if (bothnewkeys & FLAG_ANYBUTTON) keyboard_setup(1);
                 break;
             case 3:
-                keyboard_setup(2);
+                if (bothnewkeys & FLAG_ANYBUTTON) keyboard_setup(2);
                 break;
             case 4:
-                keyboard_setup(3);
+                if (bothnewkeys & FLAG_ANYBUTTON) keyboard_setup(3);
                 break;
             #if ANDROID
             case 5:
@@ -38759,10 +38759,10 @@ void menu_options_sound()
                 savedata.showtitles = !savedata.showtitles;
                 break;
             case 5:
-                menu_options_soundcard();
+                if (bothnewkeys & FLAG_ANYBUTTON) menu_options_soundcard();
                 break;
             default:
-                quit = 1;
+                quit = (bothnewkeys & FLAG_ANYBUTTON);
             }
         }
     }
@@ -38850,46 +38850,48 @@ void menu_options_config()     //  OX. Load from / save to default.cfg. Restore 
 
         if(bothnewkeys & (FLAG_MOVELEFT | FLAG_MOVERIGHT | FLAG_ANYBUTTON))
         {
-
             if(SAMPLE_BEEP2 >= 0)
             {
                 sound_play_sample(SAMPLE_BEEP2, 0, savedata.effectvol, savedata.effectvol, 100);
             }
 
-            switch(selector)
+            if(bothnewkeys & FLAG_ANYBUTTON)
             {
-            case 0:
-                saveasdefault();
-                saved = 1;
-                break;
+                switch(selector)
+                {
+                case 0:
+                    saveasdefault();
+                    saved = 1;
+                    break;
 
-            case 1:
-                loadfromdefault();
-                //borShutdown(2, "\nSettings Loaded From Default.cfg. Restart Required.\n\n");
-                init_videomodes(0);
-                if(!video_set_mode(videomodes))
-                {
-                    borShutdown(1, "Unable to set video mode: %d x %d!\n", videomodes.hRes, videomodes.vRes);
+                case 1:
+                    loadfromdefault();
+                    //borShutdown(2, "\nSettings Loaded From Default.cfg. Restart Required.\n\n");
+                    init_videomodes(0);
+                    if(!video_set_mode(videomodes))
+                    {
+                        borShutdown(1, "Unable to set video mode: %d x %d!\n", videomodes.hRes, videomodes.vRes);
+                    }
+                    SB_setvolume(SB_VOICEVOL, savedata.soundvol);
+                    sound_volume_music(savedata.musicvol, savedata.musicvol);
+                    loaded = 1;
+                    break;
+                case 2:
+                    clearsettings();
+                    //borShutdown(2, "\nSettings Loaded From Default.cfg. Restart Required.\n\n");
+                    init_videomodes(0);
+                    if(!video_set_mode(videomodes))
+                    {
+                        borShutdown(1, "Unable to set video mode: %d x %d!\n", videomodes.hRes, videomodes.vRes);
+                    }
+                    SB_setvolume(SB_VOICEVOL, savedata.soundvol);
+                    sound_volume_music(savedata.musicvol, savedata.musicvol);
+                    restored = 1;
+                    break;
+                default:
+                    quit = 1;
                 }
-                SB_setvolume(SB_VOICEVOL, savedata.soundvol);
-                sound_volume_music(savedata.musicvol, savedata.musicvol);
-                loaded = 1;
-                break;
-            case 2:
-                clearsettings();
-                //borShutdown(2, "\nSettings Loaded From Default.cfg. Restart Required.\n\n");
-                init_videomodes(0);
-                if(!video_set_mode(videomodes))
-                {
-                    borShutdown(1, "Unable to set video mode: %d x %d!\n", videomodes.hRes, videomodes.vRes);
-                }
-                SB_setvolume(SB_VOICEVOL, savedata.soundvol);
-                sound_volume_music(savedata.musicvol, savedata.musicvol);
-                restored = 1;
-                break;
-            default:
-                quit = 1;
-            }
+            }            
         }
     }
     savesettings();
@@ -39061,7 +39063,7 @@ void menu_options_debug()
                     savedata.debug_collision_range = !savedata.debug_collision_range;
                     break;
                 case ITEM_EXIT:
-                    quit = 1;
+                    quit = (bothnewkeys & FLAG_ANYBUTTON);
             }
         }
     }
@@ -39227,7 +39229,7 @@ void menu_options_system()
 
             sound_play_sample(SAMPLE_BEEP2, 0, savedata.effectvol, savedata.effectvol, 100);
 
-                 if (selector==RET) quit = 1;
+                 if (selector==RET) quit = (bothnewkeys & FLAG_ANYBUTTON);
             else if (selector==SYS_OPT_LOG) savedata.uselog =  !savedata.uselog;
             else if (selector==SYS_OPT_VSDAMAGE)
             {
@@ -39244,9 +39246,9 @@ void menu_options_system()
                 }
             }
             else if (selector==SYS_OPT_CHEATS) cheats = !cheats;
-            else if (selector==SYS_OPT_DEBUG && !nodebugoptions) menu_options_debug();
+            else if (selector==SYS_OPT_DEBUG && !nodebugoptions && (bothnewkeys & FLAG_ANYBUTTON)) menu_options_debug();
 #ifndef DC
-            else if (selector==SYS_OPT_CONFIG-ex_labels) menu_options_config();
+            else if (selector==SYS_OPT_CONFIG-ex_labels && (bothnewkeys & FLAG_ANYBUTTON)) menu_options_config();
 #endif
 
 #ifdef PSP
@@ -39276,7 +39278,7 @@ void menu_options_system()
                 }
             }
 #endif
-            else quit = 1;
+            else quit = (bothnewkeys & FLAG_ANYBUTTON);
         }
     }
     savesettings();
@@ -39693,7 +39695,7 @@ void menu_options_video()
 #endif
 #endif
             default:
-                quit = 1;
+                quit = (bothnewkeys & FLAG_ANYBUTTON);
             }
         }
     }
@@ -39790,7 +39792,7 @@ void menu_options()
                 sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
             }
         }
-        if(bothnewkeys & (FLAG_MOVELEFT | FLAG_MOVERIGHT | FLAG_ANYBUTTON))
+        if(bothnewkeys & FLAG_ANYBUTTON)
         {
 
             if(SAMPLE_BEEP2 >= 0)
