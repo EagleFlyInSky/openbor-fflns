@@ -34429,6 +34429,24 @@ void inputrefresh(int playrecmode)
 
 }
 
+int allow_default_keys()
+{
+    int allowed = 0;
+
+    // allow default keys if not playing a level and not in select screen
+    if (level == NULL)
+    {
+        allowed = !selectScreen;
+    }
+    // during levels only allow default keys in pause
+    else
+    {
+       allowed = _pause;
+    }
+
+    return allowed;
+}
+
 void execute_keyscripts()
 {
     int p;

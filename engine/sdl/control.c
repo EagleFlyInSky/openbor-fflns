@@ -906,7 +906,7 @@ void control_update(s_playercontrols ** playercontrols, int numplayers)
 
         //White Dragon: Set input from default keys overriding previous keys
         //Default keys are available just if no configured keys are pressed!
-        if (player <= 0 && !k)
+        if (player <= 0 && !k && allow_default_keys())
         {
             for(i = 0; i < JOY_MAX_INPUTS; i++)
             {

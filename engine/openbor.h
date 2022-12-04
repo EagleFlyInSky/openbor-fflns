@@ -3142,6 +3142,7 @@ void safe_set(int *arr, int index, int newkey, int oldkey);
 void keyboard_setup_menu(int player);
 void keyboard_setup(int player);
 void inputrefresh();
+int allow_default_keys();
 
 int menu_difficulty();
 void menu_options();
