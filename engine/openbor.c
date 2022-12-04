@@ -39810,7 +39810,7 @@ void menu_options()
                 sound_play_sample(SAMPLE_BEEP, 0, savedata.effectvol, savedata.effectvol, 100);
             }
         }
-        if(bothnewkeys & FLAG_ANYBUTTON)
+        if(bothnewkeys & (FLAG_MOVELEFT | FLAG_MOVERIGHT | FLAG_ANYBUTTON))
         {
 
             if(SAMPLE_BEEP2 >= 0)
@@ -39818,31 +39818,34 @@ void menu_options()
                 sound_play_sample(SAMPLE_BEEP2, 0, savedata.effectvol, savedata.effectvol, 100);
             }
 
-                if(selector==BACK_OPTION) quit = 1;
-           else if(selector==VIDEO_OPTION) menu_options_video();
-           else if(selector==SOUND_OPTION) menu_options_sound();
-           else if(selector==CONTROL_OPTION) menu_options_input();
-           else if(selector==SYSTEM_OPTION)
-           {
-                menu_options_system();
-                if (cheats && !forcecheatsoff)
+            if(bothnewkeys & FLAG_ANYBUTTON)
+            {
+                     if(selector==BACK_OPTION) quit = 1;
+                else if(selector==VIDEO_OPTION) menu_options_video();
+                else if(selector==SOUND_OPTION) menu_options_sound();
+                else if(selector==CONTROL_OPTION) menu_options_input();
+                else if(selector==SYSTEM_OPTION)
                 {
-                    y_offset = OPT_Y_POS-TOT_CHEATS;
-                    if(level != NULL && _pause > 0) y_offset += CHEAT_PAUSE_POSY;
-                    cheat_opt_offset = 1;
-                    BACK_OPTION = END_OPTION-TOT_CHEATS+TOT_CHEATS;
+                        menu_options_system();
+                        if (cheats && !forcecheatsoff)
+                        {
+                            y_offset = OPT_Y_POS-TOT_CHEATS;
+                            if(level != NULL && _pause > 0) y_offset += CHEAT_PAUSE_POSY;
+                            cheat_opt_offset = 1;
+                            BACK_OPTION = END_OPTION-TOT_CHEATS+TOT_CHEATS;
+                        }
+                        else
+                        {
+                            y_offset = OPT_Y_POS;
+                            cheat_opt_offset = 0;
+                            BACK_OPTION = END_OPTION-TOT_CHEATS;
+                        }
                 }
-                else
-                {
-                    y_offset = OPT_Y_POS;
-                    cheat_opt_offset = 0;
-                    BACK_OPTION = END_OPTION-TOT_CHEATS;
-                }
-           }
-           else if(selector==LIVES_CHEAT) livescheat = !livescheat;
-           else if(selector==CREDITS_CHEAT) creditscheat = !creditscheat;
-           else if(selector==HEALTH_CHEAT) healthcheat = !healthcheat;
-           else quit = 1;
+                else if(selector==LIVES_CHEAT) livescheat = !livescheat;
+                else if(selector==CREDITS_CHEAT) creditscheat = !creditscheat;
+                else if(selector==HEALTH_CHEAT) healthcheat = !healthcheat;
+                else quit = 1;
+            }
         }
     }
     savesettings();
