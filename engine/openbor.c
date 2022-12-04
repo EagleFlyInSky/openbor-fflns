@@ -35902,7 +35902,7 @@ void playscene(char *filename)
                 skipone = GET_INT_ARG(4);
                 noskip = GET_INT_ARG(5);
                 status = playgif(videofile, x, y, noskip);
-                if(status == -1 && !skipone)
+                if((status == -1 && !skipone) || (bothnewkeys & FLAG_ESC))
                 {
                     closing = 1;
                 }
