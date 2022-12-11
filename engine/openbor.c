@@ -37521,12 +37521,12 @@ void playgame(int *players,  unsigned which_set, int useSavedGame)
             {
                 hallfame(1);
             }
-            memset(player, 0, sizeof(*player) * 4);
         }
     }
 
 endgame:
     // clear global script variant list
+    memset(player, 0, sizeof(*player) * 4);
     branch_name[0] = 0;
     sound_close_music();
 }
