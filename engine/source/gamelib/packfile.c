@@ -93,14 +93,14 @@ List *filenamelist = NULL;
 // This variables are only used for with Caching code
 //
 static int pakfd;
-static int paksize;
-static int pak_vfdexists[MAXPACKHANDLES];
-static int pak_vfdstart[MAXPACKHANDLES];
-static int pak_vfdsize[MAXPACKHANDLES];
-static int pak_vfdpos[MAXPACKHANDLES];
-static int pak_vfdreadahead[MAXPACKHANDLES];
-static int pak_headerstart;
-static int pak_headersize;
+static unsigned int paksize;
+static unsigned int pak_vfdexists[MAXPACKHANDLES];
+static unsigned int pak_vfdstart[MAXPACKHANDLES];
+static unsigned int pak_vfdsize[MAXPACKHANDLES];
+static unsigned int pak_vfdpos[MAXPACKHANDLES];
+static unsigned int pak_vfdreadahead[MAXPACKHANDLES];
+static unsigned int pak_headerstart;
+static unsigned int pak_headersize;
 static unsigned char *pak_cdheader;
 static unsigned char *pak_header;
 
@@ -791,10 +791,10 @@ int pak_isvalidhandle(int handle)
 
 static int pak_rawread(int fd, unsigned char *dest, int len, int blocking)
 {
-    int end;
-    int r;
-    int total = 0;
-    int pos = pak_vfdstart[fd] + pak_vfdpos[fd];
+    unsigned int end;
+    unsigned int r;
+    unsigned int total = 0;
+    unsigned int pos = pak_vfdstart[fd] + pak_vfdpos[fd];
 
     if(pos < 0)
     {
@@ -1056,7 +1056,7 @@ int seekPackfileCached(int handle, int offset, int whence)
 //
 // returns number of sectors read successfully
 //
-static int pak_getsectors(void *dest, int lba, int n)
+static int pak_getsectors(void *dest, unsigned int lba, int n)
 {
 #ifdef DC
     if((lba + n) > ((paksize + 0x7FF) / 0x800))
@@ -1284,7 +1284,7 @@ int pak_init()
         return 0;
     }
     {
-        int getptrfrom = paksize - 4;
+        unsigned int getptrfrom = paksize - 4;
         if(pak_getsectors(sectors, getptrfrom >> 11, 2) < 1)
         {
             printf("unable to read pak header pointer\n");
@@ -1416,7 +1416,7 @@ void packfile_music_read(fileliststruct *filelist, int dListTotal)
             {
                 goto closepak;
             }
-            if(fseek(fd, -4, SEEK_END) < 0)
+            if(_fseeki64(fd, -4, SEEK_END) < 0)
             {
                 goto closepak;
             }
@@ -1424,7 +1424,7 @@ void packfile_music_read(fileliststruct *filelist, int dListTotal)
             {
                 goto closepak;
             }
-            if(fseek(fd, off, SEEK_SET) < 0)
+            if(_fseeki64(fd, off, SEEK_SET) < 0)
             {
                 goto closepak;
             }
@@ -1446,7 +1446,7 @@ void packfile_music_read(fileliststruct *filelist, int dListTotal)
                 }
 nextpak:
                 off += pn.pns_len;
-                if(fseek(fd, off, SEEK_SET) < 0)
+                if(_fseeki64(fd, off, SEEK_SET) < 0)
                 {
                     goto closepak;
                 }
@@ -1476,7 +1476,7 @@ int packfile_music_play(struct fileliststruct *filelist, FILE *bgmFile, int bgmL
     }
     if (stristr(packfile, ".pak"))
     {
-        if(fseek(bgmFile, filelist[curPos + scrPos].bgmTracks[filelist[curPos + scrPos].bgmTrack], SEEK_SET) < 0)
+        if(_fseeki64(bgmFile, filelist[curPos + scrPos].bgmTracks[filelist[curPos + scrPos].bgmTrack], SEEK_SET) < 0)
         {
             return 0;
         }

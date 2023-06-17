@@ -462,7 +462,7 @@ OBJS            = $(MAIN)                                                       
 CFLAGS 	       += $(addprefix -I", $(addsuffix ", $(INCS))) $(ARCHFLAGS) -D$(TARGET_PLATFORM)
 #CFLAGS 	       += -g -Wall -Werror -fsigned-char -std=gnu99
 #-Wno-unused-variable
-CFLAGS 	       += -g -Wall -fsigned-char -std=gnu99 
+CFLAGS 	       += -g -Wall -fsigned-char -std=gnu99 -D_FILE_OFFSET_BITS=64 
 
 ifndef BUILD_DARWIN
 ifdef BUILD_LINUX

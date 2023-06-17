@@ -175,7 +175,8 @@ int main(int argc, char *argv[]) {
 		}
 
 		// fflush(fd);
-		off = ftell(fd);
+		off = _ftelli64(fd);
+		_fseeki64(fd, off, SEEK_SET);
 		printf("- files info offset: %08x\n", off);
 
 		ps = pnp;
@@ -209,10 +210,10 @@ int main(int argc, char *argv[]) {
 
 		packver = fdrinum(fd, 32);
 
-		if(fseek(fd, -4, SEEK_END) < 0) std_err();
+		if(_fseeki64(fd, -4, SEEK_END) < 0) std_err();
 
 		off = fdrinum(fd, 32);
-		if(fseek(fd, off, SEEK_SET) < 0) std_err();
+		if(_fseeki64(fd, off, SEEK_SET) < 0) std_err();
 
 		for(;;) {
 			pn.pns  = fdrinum(fd, 32);
@@ -234,7 +235,7 @@ int main(int argc, char *argv[]) {
 
 			free(pn.name);
 			off += pn.pns;
-			if(fseek(fd, off, SEEK_SET) < 0) std_err();
+			if(_fseeki64(fd, off, SEEK_SET) < 0) std_err();
 		}
 	}
 
@@ -272,7 +273,8 @@ int put_file(FILE *fd, char *fname) {
 	}
 
 	// fflush(fd);
-	off = ftell(fd);
+	off = _ftelli64(fd);
+	_fseeki64(fd, off, SEEK_SET);
 
 	for(size = 0; (len = fread(buff, 1, sizeof(buff), fdi)); size += len) {
 		FWRITE(buff, len, fd);
@@ -314,7 +316,7 @@ void get_file(FILE *fd, char *fname, u_int off, u_int size) {
 	u_char  buff[8192];
 	char	*p;
 
-	if(fseek(fd, off, SEEK_SET) < 0) std_err();
+	if(_fseeki64(fd, off, SEEK_SET) < 0) std_err();
 
 	for(p = fname; *p; p++) {
 		if((*p == '\\') || (*p == '/')) {

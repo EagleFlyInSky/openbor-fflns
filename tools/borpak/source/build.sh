@@ -44,7 +44,7 @@ if [ `echo $TARGET_PLATFORM | grep "mac"` ]; then
   fi
 fi
 
-TARGET="borpak"
+TARGET="borpak64"
 CC=${PREFIX}gcc
 RM="rm -rf"
 SOURCE="$SOURCE borpak.c stristr.c"
