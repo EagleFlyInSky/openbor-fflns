@@ -19867,10 +19867,10 @@ void do_attack(entity *e)
     int fdefense_blockthreshold; //max damage that can be blocked for attack type.
 
     // Can't get hit after this
-    if(level_completed)
-    {
-        return;
-    }
+    // if(level_completed)
+    // {
+    //     return;
+    // }
 
     topowner = e; // trace the top owner, for projectile combo checking :)
     while(topowner->owner)
@@ -19910,6 +19910,12 @@ void do_attack(entity *e)
         target = ent_list[i];
 
         if(!target->exists)
+        {
+            continue;
+        }
+
+        // avoid players taking damage once the level is completed
+        if(level_completed && (target->modeldata.type & TYPE_PLAYER))
         {
             continue;
         }
