@@ -7,7 +7,7 @@ HOST_PLATFORM=$(uname -s)
 EXTENSION=
 SOURCE=
 PREFIX=
-CFLAGS=
+CFLAGS=" -D_FILE_OFFSET_BITS=64"
 
 if [ $# -ne 1 ]; then
   echo "Usage: '`basename $0` mac' == Mac OS X"
@@ -40,7 +40,7 @@ fi
 # Target is Mac OS X
 if [ `echo $TARGET_PLATFORM | grep "mac"` ]; then
   if [ `echo $HOST_PLATFORM | grep "Darwin"` ]; then
-    CFLAGS+="-arch x86_64 -arch i386 -arch ppc"
+    CFLAGS+=" -arch x86_64 -arch i386 -arch ppc"
   fi
 fi
 

@@ -1416,7 +1416,7 @@ void packfile_music_read(fileliststruct *filelist, int dListTotal)
             {
                 goto closepak;
             }
-            if(_fseeki64(fd, -4, SEEK_END) < 0)
+            if(fseek(fd, -4, SEEK_END) < 0)
             {
                 goto closepak;
             }
@@ -1424,7 +1424,7 @@ void packfile_music_read(fileliststruct *filelist, int dListTotal)
             {
                 goto closepak;
             }
-            if(_fseeki64(fd, off, SEEK_SET) < 0)
+            if(fseek(fd, off, SEEK_SET) < 0)
             {
                 goto closepak;
             }
@@ -1446,7 +1446,7 @@ void packfile_music_read(fileliststruct *filelist, int dListTotal)
                 }
 nextpak:
                 off += pn.pns_len;
-                if(_fseeki64(fd, off, SEEK_SET) < 0)
+                if(fseek(fd, off, SEEK_SET) < 0)
                 {
                     goto closepak;
                 }
@@ -1476,7 +1476,7 @@ int packfile_music_play(struct fileliststruct *filelist, FILE *bgmFile, int bgmL
     }
     if (stristr(packfile, ".pak"))
     {
-        if(_fseeki64(bgmFile, filelist[curPos + scrPos].bgmTracks[filelist[curPos + scrPos].bgmTrack], SEEK_SET) < 0)
+        if(fseek(bgmFile, filelist[curPos + scrPos].bgmTracks[filelist[curPos + scrPos].bgmTrack], SEEK_SET) < 0)
         {
             return 0;
         }
