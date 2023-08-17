@@ -19704,6 +19704,7 @@ int testmove(entity *ent, float sx, float sz, float x, float z)
     entity *other = NULL, *platbelow = NULL;
     int wall, heightvar;
     float xdir, zdir;
+    float epsilon = 0.5f;
 
     xdir = x - sx;
     zdir = z - sz;
@@ -19734,11 +19735,11 @@ int testmove(entity *ent, float sx, float sz, float x, float z)
     // screen checking
     if(ent->modeldata.subject_to_screen > 0)
     {
-        if(x < advancex + 10)
+        if((x + epsilon) < advancex + 10)
         {
             return 0;
         }
-        else if(x > advancex + (videomodes.hRes - 10))
+        else if((x - epsilon) > advancex + (videomodes.hRes - 10))
         {
             return 0;
         }
