@@ -16054,7 +16054,7 @@ void bar(int x, int y, int value, int maxvalue, s_barstatus *pstatus)
             }
             else
             {
-                colourindex = value / (max + 1) + 3;
+                colourindex = ((value - 1) / max) + 3;
                 bgindex = colourindex - 1;
             }
             if(colourindex > 10)
