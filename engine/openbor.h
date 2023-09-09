@@ -1902,7 +1902,7 @@ struct animlist
     struct animlist *next;
 };
 typedef struct animlist s_anim_list;
-s_anim_list *anim_list;
+extern s_anim_list *anim_list;
 
 typedef struct
 {
@@ -2248,7 +2248,7 @@ typedef struct
     int clearcount;
     int selectcol;
 } s_modelcache;
-s_modelcache *model_cache;
+extern s_modelcache *model_cache;
 
 // Caskey, Damon V.
 // 2013-12-08
