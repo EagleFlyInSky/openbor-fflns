@@ -32460,6 +32460,7 @@ entity *knife_spawn(char *name, int index, float x, float z, float a, int direct
 
     e->spawntype = SPAWN_TYPE_PROJECTILE_NORMAL;
     e->owner = self;                                                     // Added so projectiles don't hit the owner
+    e->playerindex = self->playerindex;
     e->nograb = 1;                                                       // Prevents trying to grab a projectile
     e->attacking = ATTACKING_ACTIVE;
     //e->direction = direction;
@@ -32558,6 +32559,7 @@ entity *boomerang_spawn(char *name, int index, float x, float z, float a, int di
 
     e->spawntype = SPAWN_TYPE_PROJECTILE_BOOMERANG;
     e->owner = self;                                                     // Added so projectiles don't hit the owner
+    e->playerindex = self->playerindex;
     e->nograb = 1;                                                       // Prevents trying to grab a projectile
     e->attacking = ATTACKING_ACTIVE;
     //e->direction = direction;
@@ -32666,6 +32668,7 @@ entity *bomb_spawn(char *name, int index, float x, float z, float a, int directi
     e->spawntype = SPAWN_TYPE_PROJECTILE_BOMB;
     e->attacking = ATTACKING_ACTIVE;
     e->owner = self;                                                     // Added so projectiles don't hit the owner
+    e->playerindex = self->playerindex;
     e->nograb = 1;                                                       // Prevents trying to grab a projectile
     e->toexplode = 1;                                                    // Set to distinguish exploding projectiles and also so stops falling when hitting an opponent
     ent_set_colourmap(e, map);
@@ -32740,6 +32743,7 @@ int star_spawn(float x, float z, float a, int direction)  // added entity to kno
         e->sortid = first_sortid - i;
         e->takedamage = arrow_takedamage;//enemy_takedamage;    // Players can now hit projectiles
         e->owner = self;    // Added so enemy projectiles don't hit the owner
+        e->playerindex = self->playerindex;
         e->attacking = ATTACKING_ACTIVE;
         e->nograb = 1;    // Prevents trying to grab a projectile
         if (self->animation->starvelocity)
