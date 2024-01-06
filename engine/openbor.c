@@ -22302,8 +22302,8 @@ void display_ents()
                     if(e->owner)
                     {
                         // WD: This is for projectile or entity spawned by owner: general rule: Always in front
-                        if ( !(self->modeldata.aimove & AIMOVE1_BOOMERANG) &&
-                             !(self->modeldata.aimove & AIMOVE1_STAR)
+                        if ( !(e->modeldata.aimove & AIMOVE1_BOOMERANG) &&
+                             !(e->modeldata.aimove & AIMOVE1_STAR)
                              ) sortid = e->owner->sortid + 1;
                     }
 
@@ -22413,7 +22413,7 @@ void display_ents()
                         spriteq_add_sprite((int)(e->position.x - scrx), (int)(e->position.z - e->position.y - scry), z, f, drawmethod, sortid);
                     }
 
-                    can_mirror = (use_mirror && self->position.z > MIRROR_Z);
+                    can_mirror = (use_mirror && e->position.z > MIRROR_Z);
                     if(can_mirror)
                     {
                         spriteq_add_sprite((int)(e->position.x - scrx), (int)((2 * MIRROR_Z - e->position.z) - e->position.y - scry), 2 * PANEL_Z - z , f, drawmethod, ent_list_size * 100 - sortid);
