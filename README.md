@@ -1,4 +1,12 @@
- # OpenBOR
+# OpenBOR FFLNS 
+
+做了简单的修改，使安卓版支持前端启动游戏。
+
+Made a simple modification to enable the Android version to support frontend launching games.
+
+
+
+# OpenBOR
 OpenBOR is a continuation of the Beats Of Rage 2D game engine, which was originally
 created by the wonderful folks over at [Senile Team](http://www.senileteam.com). 
 
