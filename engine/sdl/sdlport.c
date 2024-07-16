@@ -15,7 +15,9 @@
 #include <unistd.h>
 
 #undef usleep
-
+#ifdef ANDROID
+#include "jniutils.h"
+#endif
 #ifdef DARWIN
 #include <CoreFoundation/CoreFoundation.h>
 #elif WIN
@@ -107,27 +109,20 @@ int main(int argc, char *argv[])
 	packfile_mode(0);
 
 #ifdef ANDROID
-    if(strstr(SDL_AndroidGetExternalStoragePath(), "org.openborfflns.engine"))
-    {
-        strcpy(rootDir, "/mnt/sdcard/OpenBOR/");
-        strcpy(paksDir, "/mnt/sdcard/OpenBOR/Paks");
-        strcpy(savesDir, "/mnt/sdcard/OpenBOR/Saves");
-        strcpy(logsDir, "/mnt/sdcard/OpenBOR/Logs");
-        strcpy(screenShotsDir, "/mnt/sdcard/OpenBOR/ScreenShots");
-    }
-    else
-    {
-        strcpy(rootDir, SDL_AndroidGetExternalStoragePath());
-        strcat(rootDir, "/");
-        strcpy(paksDir, SDL_AndroidGetExternalStoragePath());
-        strcat(paksDir, "/Paks");
-        strcpy(savesDir, SDL_AndroidGetExternalStoragePath());
-        strcat(savesDir, "/Saves");
-        strcpy(logsDir, SDL_AndroidGetExternalStoragePath());
-        strcat(logsDir, "/Logs");
-        strcpy(screenShotsDir, SDL_AndroidGetExternalStoragePath());
-        strcat(screenShotsDir, "/ScreenShots");
-    }
+    char *path = (char*) malloc(MAX_FILENAME_LEN);
+    jniutils_get_storage_path(path);
+
+    strcpy(rootDir, path);
+    strcat(rootDir, "/");
+    strcpy(paksDir, path);
+    strcat(paksDir, "/Paks");
+    strcpy(savesDir, path);
+    strcat(savesDir, "/Saves");
+    strcpy(logsDir, path);
+    strcat(logsDir, "/Logs");
+    strcpy(screenShotsDir, path);
+    strcat(screenShotsDir, "/ScreenShots");
+
 	dirExists(rootDir, 1);
     chdir(rootDir);
 #endif
@@ -137,6 +132,15 @@ int main(int argc, char *argv[])
 	dirExists(logsDir, 1);
 	dirExists(screenShotsDir, 1);
 
+#ifdef ANDROID
+    char *game_path = (char*) malloc(MAX_FILENAME_LEN);
+    jniutils_get_game_path(game_path);
+    if (strlen(game_path) == 0){
+        Menu();
+    }else{
+        LoadGame(game_path);
+    }
+#else
    // Test command line argument to launch MOD
    int romArg = 0;
    if(argc > 1) {
@@ -149,6 +153,7 @@ int main(int argc, char *argv[])
    if(!romArg) {
        Menu();
    }
+#endif
 
 #ifndef SKIP_CODE
 	getPakName(pakname, -1);

@@ -7,3 +7,5 @@ engine/.vscode/*.log
 engine/releases/
 engine/android/
 tools/
+.idea
+*.iml
